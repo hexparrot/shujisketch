@@ -1,0 +1,66 @@
+import unittest
+import cairo
+import char_surface as cs
+
+
+class TestCharacterSurfaceCreation(unittest.TestCase):
+    def setUp(self):
+        # Setup tasks before each test method
+        self.CHARACTER = "あ"
+        self.FONT_SIZE = 72
+        self.EDGE_LENGTH = 100
+
+    def test_surface_size(self):
+        surface = cs.create_blank(
+            cairo.FORMAT_ARGB32, self.EDGE_LENGTH, self.EDGE_LENGTH
+        )
+        self.assertEqual(surface.get_width(), self.EDGE_LENGTH)
+        self.assertEqual(surface.get_height(), self.EDGE_LENGTH)
+
+    def test_background_is_white(self):
+        surface = cs.create_blank(
+            cairo.FORMAT_ARGB32, self.EDGE_LENGTH, self.EDGE_LENGTH
+        )
+        self.assertTrue(cs.is_pixel_white(surface, 0, 0))
+        self.assertTrue(cs.is_pixel_white(surface, 1, 1))
+        self.assertTrue(cs.is_pixel_white(surface, 0, 99))
+        self.assertTrue(cs.is_pixel_white(surface, 99, 0))
+        self.assertTrue(cs.is_pixel_white(surface, 99, 99))
+
+    def test_colortesting_out_of_bounds(self):
+        surface = cs.create_blank(
+            cairo.FORMAT_ARGB32, self.EDGE_LENGTH, self.EDGE_LENGTH
+        )
+        with self.assertRaises(ValueError):
+            self.assertRaises(cs.is_pixel_white(surface, 100, 100))
+        with self.assertRaises(ValueError):
+            self.assertRaises(cs.is_pixel_white(surface, 100, 0))
+        with self.assertRaises(ValueError):
+            self.assertRaises(cs.is_pixel_white(surface, 0, 100))
+
+    def test_draw_horizontal_rules(self):
+        surface = cs.create_blank(
+            cairo.FORMAT_ARGB32, self.EDGE_LENGTH, self.EDGE_LENGTH
+        )
+        new_surface = cs.apply_horizontal_rule(surface)
+
+        for y in [20, 80]:
+            # dash on
+            self.assertFalse(cs.is_pixel_white(new_surface, 0, y))
+            self.assertFalse(cs.is_pixel_white(new_surface, 1, y))
+            # dash off
+            self.assertTrue(cs.is_pixel_white(new_surface, 2, y))
+            self.assertTrue(cs.is_pixel_white(new_surface, 3, y))
+            self.assertTrue(cs.is_pixel_white(new_surface, 4, y))
+            self.assertTrue(cs.is_pixel_white(new_surface, 5, y))
+            # dash on
+            self.assertFalse(cs.is_pixel_white(new_surface, 6, y))
+            self.assertFalse(cs.is_pixel_white(new_surface, 7, y))
+            # dash off
+            self.assertTrue(cs.is_pixel_white(new_surface, 8, y))
+            self.assertTrue(cs.is_pixel_white(new_surface, 9, y))
+            self.assertTrue(cs.is_pixel_white(new_surface, 10, y))
+
+
+if __name__ == "__main__":
+    unittest.main()
