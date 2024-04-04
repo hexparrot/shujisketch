@@ -61,6 +61,24 @@ class TestCharacterSurfaceCreation(unittest.TestCase):
             self.assertTrue(cs.is_pixel_white(new_surface, 9, y))
             self.assertTrue(cs.is_pixel_white(new_surface, 10, y))
 
+    def test_bounding_box(self):
+        surface = cs.create_blank(
+            cairo.FORMAT_ARGB32, self.EDGE_LENGTH, self.EDGE_LENGTH
+        )
+        new_surface = cs.draw_bounding_box(surface)
+
+        # Test horizontal lines at y=10 and y=90
+        for y in [10, 90]:
+            for x in range(0, self.EDGE_LENGTH):
+                # Expect non-white (line) pixels across the entire row
+                self.assertFalse(cs.is_pixel_white(new_surface, x, y))
+
+        # Test vertical lines at x=0 and x=99
+        for x in [0, 99]:
+            for y in range(10, 91):  # From row 10 to row 90 inclusive
+                # Expect non-white (line) pixels down the entire column
+                self.assertFalse(cs.is_pixel_white(new_surface, x, y))
+
 
 if __name__ == "__main__":
     unittest.main()

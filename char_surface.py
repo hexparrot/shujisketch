@@ -45,3 +45,42 @@ def apply_horizontal_rule(surface):
         ctx.stroke()
 
     return surface
+
+
+def draw_bounding_box(surface):
+    """
+    Draws a bounding box of 1px width on the given Cairo ImageSurface.
+    The box is positioned with horizontal lines at rows 10 and 90, and
+    vertical lines at columns 0 and 99.
+
+    :param surface: A cairo.ImageSurface object.
+    """
+    # Create a drawing context for the surface
+    ctx = cairo.Context(surface)
+
+    # Set the line width to 1px
+    ctx.set_line_width(1)
+
+    # Set the drawing color (Here it's set to black; RGBA: 0, 0, 0, 1)
+    ctx.set_source_rgba(0, 0, 0, 1)
+
+    # Move to the starting point of the top horizontal line
+    ctx.move_to(0, 10)
+    # Draw the top horizontal line
+    ctx.line_to(99, 10)
+
+    # Draw the right vertical line
+    ctx.move_to(99, 10)
+    ctx.line_to(99, 90)
+
+    # Draw the bottom horizontal line
+    ctx.line_to(0, 90)
+
+    # Draw the left vertical line
+    ctx.line_to(0, 10)
+
+    # Stroke the path to draw the lines on the surface
+    ctx.stroke()
+
+    # Return the modified surface
+    return surface
