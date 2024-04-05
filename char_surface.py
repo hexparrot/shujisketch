@@ -110,3 +110,12 @@ def draw_character(char):
     )
 
     return surface
+
+
+def stack_surfaces(base_layer, top_layer):
+    cr = cairo.Context(base_layer)
+
+    cr.set_source_surface(top_layer, 0, 0)
+    cr.paint()
+
+    return base_layer
