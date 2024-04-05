@@ -2,6 +2,7 @@ import cairo
 
 # MODULE CONSTANTS
 FONT_SIZE = 72
+FONT_ALPHA = 127
 FONT_PATH = "/usr/share/fonts/google-droid-sans-fonts/DroidSansJapanese.ttf"
 TILE_WIDTH = 100
 TILE_HEIGHT = 100
@@ -135,7 +136,7 @@ def draw_character(char):
     draw = ImageDraw.Draw(image)
     font = ImageFont.truetype(FONT_PATH, FONT_SIZE)
     draw.text(
-        (10, 0), char, fill=(0, 0, 0, 127), font=font
+        (10, 0), char, fill=(0, 0, 0, FONT_ALPHA), font=font
     )  # Draw the text in white with semi-opacity for better contrast in grayscale conversion
 
     # Step 2: Convert the image to grayscale while preserving alpha
