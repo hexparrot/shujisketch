@@ -56,7 +56,7 @@ def create_blank(format, width, height):
     return surface
 
 
-def apply_horizontal_rule(surface):
+def apply_horizontal_rule(surface, y_offset=0):
     """
     Return a surface object with a newly applied horizontal rule
     and return the surface back.
@@ -67,6 +67,7 @@ def apply_horizontal_rule(surface):
     ctx.set_source_rgb(0.8, 0.8, 0.8)
     ctx.set_line_width(1)
     ctx.set_dash([2.0, 4.0])
+    ctx.translate(0, y_offset)
 
     for y in [20, 80]:
         ctx.move_to(0, y)
