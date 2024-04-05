@@ -2,6 +2,14 @@ import cairo
 
 
 def is_pixel_white(surface, x, y):
+    """
+    Examine a surface object and return True if the x-y coordinate
+    renders a white pixel, alpha channel notwithstanding
+
+    :param surface: A cairo.ImageSurface object.
+    :param x: x-coordinate
+    :param y: y-coordinate
+    """
     # Ensure coordinates are within the surface bounds
     if x < 0 or y < 0 or x >= surface.get_width() or y >= surface.get_height():
         raise ValueError("x or y is out of bounds.")
@@ -25,6 +33,14 @@ def is_pixel_white(surface, x, y):
 
 
 def create_blank(format, width, height):
+    """
+    Return a surface object that is sized with user dimensions
+    and is completely empty.
+
+    :param format: A cairo.FORMAT definition.
+    :param width: width of surface
+    :param height: heigh of surface
+    """
     surface = cairo.ImageSurface(format, width, height)
     # Create a white image for testing
     ctx = cairo.Context(surface)
@@ -34,6 +50,12 @@ def create_blank(format, width, height):
 
 
 def draw_horizontal_rule(surface):
+    """
+    Return a surface object with a newly applied horizontal rule
+    and return the surface back.
+
+    :param surface: A cairo.ImageSurface object.
+    """
     ctx = cairo.Context(surface)
     ctx.set_source_rgb(0.8, 0.8, 0.8)
     ctx.set_line_width(1)
@@ -51,9 +73,11 @@ def draw_bounding_box(surface, x_offset=0, y_offset=0):
     """
     Draws a bounding box of 1px width on the given Cairo ImageSurface.
     The box is positioned with horizontal lines at rows 10 and 90, and
-    vertical lines at columns 0 and 99.
+    vertical lines at columns 0 and 99. (max width, less than max height)
 
     :param surface: A cairo.ImageSurface object.
+    :param x_offset: x-coordinate to translate drawing
+    :param y_offset: y-coordinate to translate drawing
     """
     # Create a drawing context for the surface
     ctx = cairo.Context(surface)
@@ -89,6 +113,11 @@ def draw_bounding_box(surface, x_offset=0, y_offset=0):
 
 
 def draw_character(char):
+    """
+    Draw a character on a fully transparent surface and return it.
+
+    :param char: the character to draw
+    """
     from PIL import Image, ImageDraw, ImageFont
     import numpy as np
     import cairo
@@ -125,6 +154,14 @@ def draw_character(char):
 
 
 def stack_surfaces(base_layer, top_layer, x_offset=0, y_offset=0):
+    """
+    Stack two surfaces atop another.
+
+    :param base_layer: A cairo.ImageSurface object.
+    :param top_layer: A cairo.ImageSurface object.
+    :param x_offset: x-coordinate to translate drawing
+    :param y_offset: y-coordinate to translate drawing
+    """
     cr = cairo.Context(base_layer)
 
     cr.set_source_surface(top_layer, x_offset, y_offset)
