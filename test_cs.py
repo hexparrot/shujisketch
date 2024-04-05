@@ -8,19 +8,14 @@ class TestCharacterSurfaceCreation(unittest.TestCase):
         # Setup tasks before each test method
         self.CHARACTER = "あ"
         self.FONT_SIZE = 72
-        self.EDGE_LENGTH = 100
 
     def test_surface_size(self):
-        surface = cs.create_blank(
-            cairo.FORMAT_ARGB32, self.EDGE_LENGTH, self.EDGE_LENGTH
-        )
-        self.assertEqual(surface.get_width(), self.EDGE_LENGTH)
-        self.assertEqual(surface.get_height(), self.EDGE_LENGTH)
+        surface = cs.create_blank(cairo.FORMAT_ARGB32, cs.TILE_WIDTH, cs.TILE_HEIGHT)
+        self.assertEqual(surface.get_width(), cs.TILE_HEIGHT)
+        self.assertEqual(surface.get_height(), cs.TILE_WIDTH)
 
     def test_background_is_white(self):
-        surface = cs.create_blank(
-            cairo.FORMAT_ARGB32, self.EDGE_LENGTH, self.EDGE_LENGTH
-        )
+        surface = cs.create_blank(cairo.FORMAT_ARGB32, cs.TILE_WIDTH, cs.TILE_HEIGHT)
         self.assertTrue(cs.is_pixel_white(surface, 0, 0))
         self.assertTrue(cs.is_pixel_white(surface, 1, 1))
         self.assertTrue(cs.is_pixel_white(surface, 0, 99))
@@ -28,9 +23,7 @@ class TestCharacterSurfaceCreation(unittest.TestCase):
         self.assertTrue(cs.is_pixel_white(surface, 99, 99))
 
     def test_colortesting_out_of_bounds(self):
-        surface = cs.create_blank(
-            cairo.FORMAT_ARGB32, self.EDGE_LENGTH, self.EDGE_LENGTH
-        )
+        surface = cs.create_blank(cairo.FORMAT_ARGB32, cs.TILE_WIDTH, cs.TILE_HEIGHT)
         with self.assertRaises(ValueError):
             self.assertRaises(cs.is_pixel_white(surface, 100, 100))
         with self.assertRaises(ValueError):
@@ -39,9 +32,7 @@ class TestCharacterSurfaceCreation(unittest.TestCase):
             self.assertRaises(cs.is_pixel_white(surface, 0, 100))
 
     def test_draw_horizontal_rules(self):
-        surface = cs.create_blank(
-            cairo.FORMAT_ARGB32, self.EDGE_LENGTH, self.EDGE_LENGTH
-        )
+        surface = cs.create_blank(cairo.FORMAT_ARGB32, cs.TILE_WIDTH, cs.TILE_HEIGHT)
         new_surface = cs.draw_horizontal_rule(surface)
 
         for y in [20, 80]:
@@ -62,14 +53,12 @@ class TestCharacterSurfaceCreation(unittest.TestCase):
             self.assertTrue(cs.is_pixel_white(new_surface, 10, y))
 
     def test_bounding_box(self):
-        surface = cs.create_blank(
-            cairo.FORMAT_ARGB32, self.EDGE_LENGTH, self.EDGE_LENGTH
-        )
+        surface = cs.create_blank(cairo.FORMAT_ARGB32, cs.TILE_WIDTH, cs.TILE_HEIGHT)
         new_surface = cs.draw_bounding_box(surface)
 
         # Test horizontal lines at y=10 and y=90
         for y in [10, 90]:
-            for x in range(0, self.EDGE_LENGTH):
+            for x in range(0, cs.TILE_WIDTH):
                 # Expect non-white (line) pixels across the entire row
                 self.assertFalse(cs.is_pixel_white(new_surface, x, y))
 
@@ -92,9 +81,7 @@ class TestCharacterSurfaceCreation(unittest.TestCase):
     def test_stack_surfaces(self):
         stacking_surface = cs.draw_character("は")
 
-        surface = cs.create_blank(
-            cairo.FORMAT_ARGB32, self.EDGE_LENGTH, self.EDGE_LENGTH
-        )
+        surface = cs.create_blank(cairo.FORMAT_ARGB32, cs.TILE_WIDTH, cs.TILE_HEIGHT)
 
         new_surface = cs.stack_surfaces(surface, stacking_surface)
 
@@ -109,7 +96,7 @@ class TestCharacterSurfaceCreation(unittest.TestCase):
         stacking_surface = cs.draw_character("は")
 
         surface = cs.create_blank(
-            cairo.FORMAT_ARGB32, self.EDGE_LENGTH * 2, self.EDGE_LENGTH
+            cairo.FORMAT_ARGB32, cs.TILE_WIDTH * 2, cs.TILE_HEIGHT
         )  # twice as wide
 
         new_surface = cs.stack_surfaces(surface, stacking_surface, x_offset=100)
@@ -128,7 +115,7 @@ class TestCharacterSurfaceCreation(unittest.TestCase):
         stacking_surface = cs.draw_character("は")
 
         surface = cs.create_blank(
-            cairo.FORMAT_ARGB32, self.EDGE_LENGTH, self.EDGE_LENGTH * 2
+            cairo.FORMAT_ARGB32, cs.TILE_WIDTH, cs.TILE_HEIGHT * 2
         )  # twice as tall
 
         new_surface = cs.stack_surfaces(surface, stacking_surface, y_offset=100)
@@ -146,9 +133,7 @@ class TestCharacterSurfaceCreation(unittest.TestCase):
     def test_full_character(self):
         stacking_surface = cs.draw_character("は")
 
-        surface = cs.create_blank(
-            cairo.FORMAT_ARGB32, self.EDGE_LENGTH, self.EDGE_LENGTH
-        )
+        surface = cs.create_blank(cairo.FORMAT_ARGB32, cs.TILE_WIDTH, cs.TILE_HEIGHT)
 
         ruled_surface = cs.draw_horizontal_rule(surface)
         boxed_surface = cs.draw_bounding_box(ruled_surface)
@@ -175,7 +160,7 @@ class TestCharacterSurfaceCreation(unittest.TestCase):
 
         # Test horizontal lines at y=10 and y=90
         for y in [10, 90]:
-            for x in range(0, self.EDGE_LENGTH):
+            for x in range(0, cs.TILE_WIDTH):
                 # Expect non-white (line) pixels across the entire row
                 self.assertFalse(cs.is_pixel_white(new_surface, x, y))
 
@@ -190,7 +175,7 @@ class TestCharacterSurfaceCreation(unittest.TestCase):
         stacking_surface_two = cs.draw_character("は")
 
         surface = cs.create_blank(
-            cairo.FORMAT_ARGB32, self.EDGE_LENGTH * 2, self.EDGE_LENGTH
+            cairo.FORMAT_ARGB32, cs.TILE_WIDTH * 2, cs.TILE_HEIGHT
         )  # twice as wide
 
         ruled_surface = cs.draw_horizontal_rule(surface)
@@ -224,7 +209,7 @@ class TestCharacterSurfaceCreation(unittest.TestCase):
 
         # Test horizontal lines at y=10 and y=90
         for y in [10, 90]:
-            for x in range(0, self.EDGE_LENGTH * 2):  # twice as wide
+            for x in range(0, cs.TILE_WIDTH * 2):  # twice as wide
                 # Expect non-white (line) pixels across the entire row
                 self.assertFalse(cs.is_pixel_white(new_surface, x, y))
 

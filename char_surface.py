@@ -1,5 +1,9 @@
 import cairo
 
+# MODULE CONSTANTS
+TILE_WIDTH = 100
+TILE_HEIGHT = 100
+
 
 def is_pixel_white(surface, x, y):
     """
@@ -124,7 +128,7 @@ def draw_character(char):
 
     # Step 1: Draw the character on a transparent background
     image = Image.new(
-        "RGBA", (100, 100), (0, 0, 0, 0)
+        "RGBA", (TILE_WIDTH, TILE_HEIGHT), (0, 0, 0, 0)
     )  # Use fully transparent background
     draw = ImageDraw.Draw(image)
     font = ImageFont.truetype(
@@ -147,7 +151,7 @@ def draw_character(char):
 
     # Step 3: Create a Cairo ImageSurface from the NumPy array data
     surface = cairo.ImageSurface.create_for_data(
-        data, cairo.FORMAT_ARGB32, 100, 100, 100 * 4
+        data, cairo.FORMAT_ARGB32, TILE_WIDTH, TILE_HEIGHT, TILE_WIDTH * 4
     )
 
     return surface
