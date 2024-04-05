@@ -89,22 +89,32 @@ def draw_bounding_box(surface):
 def draw_character(char):
     from PIL import Image, ImageDraw, ImageFont
     import numpy as np
+    import cairo
 
-    background = Image.new("RGBA", (100, 100), (255, 255, 255, 255))
-    image = Image.new("RGBA", (100, 100), (255, 255, 255, 0))  # Transparent background
+    # Step 1: Draw the character on a transparent background
+    image = Image.new(
+        "RGBA", (100, 100), (0, 0, 0, 0)
+    )  # Use fully transparent background
     draw = ImageDraw.Draw(image)
     font = ImageFont.truetype(
         "/usr/share/fonts/google-droid-sans-fonts/DroidSansJapanese.ttf", 72
     )
     draw.text(
         (10, 0), char, fill=(0, 0, 0, 127), font=font
-    )  # Black text, 10 offset to center
+    )  # Draw the text in white with semi-opacity for better contrast in grayscale conversion
 
-    # Convert the PIL image to a NumPy array, then to BGRA for Cairo
-    arr = np.array(image)[:, :, [2, 1, 0, 3]]  # Convert RGBA to BGRA
-    data = arr.astype(np.uint8).flatten()
+    # Step 2: Convert the image to grayscale while preserving alpha
+    gray_image = image.convert("LA")
 
-    # Create a Cairo ImageSurface from the NumPy array data
+    # Convert the PIL image (gray_image) to a NumPy array, then to BGRA for Cairo
+    arr = np.array(gray_image)
+    # Expand LA to RGBA by repeating the L value and combining with the A value
+    bgra_arr = np.zeros((arr.shape[0], arr.shape[1], 4), dtype=np.uint8)
+    bgra_arr[..., :3] = arr[..., 0:1]  # Set RGB to the L value
+    bgra_arr[..., 3] = arr[..., 1]  # Set A value
+    data = bgra_arr.flatten()
+
+    # Step 3: Create a Cairo ImageSurface from the NumPy array data
     surface = cairo.ImageSurface.create_for_data(
         data, cairo.FORMAT_ARGB32, 100, 100, 100 * 4
     )
