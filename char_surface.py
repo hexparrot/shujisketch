@@ -56,7 +56,7 @@ def create_blank(format, width, height):
     return surface
 
 
-def draw_horizontal_rule(surface):
+def apply_horizontal_rule(surface):
     """
     Return a surface object with a newly applied horizontal rule
     and return the surface back.
@@ -76,7 +76,7 @@ def draw_horizontal_rule(surface):
     return surface
 
 
-def draw_bounding_box(surface, x_offset=0, y_offset=0):
+def apply_bounding_box(surface, x_offset=0, y_offset=0):
     """
     Draws a bounding box of 1px width on the given Cairo ImageSurface.
     The box is positioned with horizontal lines at rows 10 and 90, and

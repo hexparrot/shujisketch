@@ -29,9 +29,9 @@ class TestCharacterSurfaceCreation(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.assertRaises(cs.is_pixel_white(surface, 0, 100))
 
-    def test_draw_horizontal_rules(self):
+    def test_apply_horizontal_rules(self):
         surface = cs.create_blank(cairo.FORMAT_ARGB32, cs.TILE_WIDTH, cs.TILE_HEIGHT)
-        new_surface = cs.draw_horizontal_rule(surface)
+        new_surface = cs.apply_horizontal_rule(surface)
 
         for y in [20, 80]:
             # dash on
@@ -52,7 +52,7 @@ class TestCharacterSurfaceCreation(unittest.TestCase):
 
     def test_bounding_box(self):
         surface = cs.create_blank(cairo.FORMAT_ARGB32, cs.TILE_WIDTH, cs.TILE_HEIGHT)
-        new_surface = cs.draw_bounding_box(surface)
+        new_surface = cs.apply_bounding_box(surface)
 
         # Test horizontal lines at y=10 and y=90
         for y in [10, 90]:
@@ -133,9 +133,9 @@ class TestCharacterSurfaceCreation(unittest.TestCase):
 
         surface = cs.create_blank(cairo.FORMAT_ARGB32, cs.TILE_WIDTH, cs.TILE_HEIGHT)
 
-        ruled_surface = cs.draw_horizontal_rule(surface)
-        boxed_surface = cs.draw_bounding_box(ruled_surface)
-        boxed_surface = cs.draw_bounding_box(boxed_surface, 100, 0)
+        ruled_surface = cs.apply_horizontal_rule(surface)
+        boxed_surface = cs.apply_bounding_box(ruled_surface)
+        boxed_surface = cs.apply_bounding_box(boxed_surface, 100, 0)
 
         new_surface = cs.stack_surfaces(boxed_surface, stacking_surface)
 
@@ -176,9 +176,9 @@ class TestCharacterSurfaceCreation(unittest.TestCase):
             cairo.FORMAT_ARGB32, cs.TILE_WIDTH * 2, cs.TILE_HEIGHT
         )  # twice as wide
 
-        ruled_surface = cs.draw_horizontal_rule(surface)
-        boxed_surface = cs.draw_bounding_box(ruled_surface)
-        boxed_surface = cs.draw_bounding_box(boxed_surface, x_offset=100)
+        ruled_surface = cs.apply_horizontal_rule(surface)
+        boxed_surface = cs.apply_bounding_box(ruled_surface)
+        boxed_surface = cs.apply_bounding_box(boxed_surface, x_offset=100)
 
         next_surface = cs.stack_surfaces(boxed_surface, stacking_surface_one)
         new_surface = cs.stack_surfaces(
