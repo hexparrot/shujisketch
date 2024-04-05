@@ -105,6 +105,44 @@ class TestCharacterSurfaceCreation(unittest.TestCase):
         self.assertFalse(cs.is_pixel_white(new_surface, 25, 35))
         self.assertFalse(cs.is_pixel_white(new_surface, 60, 40))
 
+    def test_stack_surfaces_x_offset(self):
+        stacking_surface = cs.draw_character("は")
+
+        surface = cs.create_blank(
+            cairo.FORMAT_ARGB32, self.EDGE_LENGTH * 2, self.EDGE_LENGTH
+        )  # twice as wide
+
+        new_surface = cs.stack_surfaces(surface, stacking_surface, x_offset=100)
+
+        # spot check surface is white
+        self.assertTrue(cs.is_pixel_white(new_surface, 0, 0))
+        self.assertTrue(cs.is_pixel_white(new_surface, 1, 0))
+        self.assertTrue(cs.is_pixel_white(new_surface, 25, 35))
+        self.assertTrue(cs.is_pixel_white(new_surface, 60, 40))
+
+        # spot check certain points are non-white where char is drawn
+        self.assertFalse(cs.is_pixel_white(new_surface, 125, 35))
+        self.assertFalse(cs.is_pixel_white(new_surface, 160, 40))
+
+    def test_stack_surfaces_y_offset(self):
+        stacking_surface = cs.draw_character("は")
+
+        surface = cs.create_blank(
+            cairo.FORMAT_ARGB32, self.EDGE_LENGTH, self.EDGE_LENGTH * 2
+        )  # twice as tall
+
+        new_surface = cs.stack_surfaces(surface, stacking_surface, y_offset=100)
+
+        # spot check surface is white
+        self.assertTrue(cs.is_pixel_white(new_surface, 0, 0))
+        self.assertTrue(cs.is_pixel_white(new_surface, 1, 0))
+        self.assertTrue(cs.is_pixel_white(new_surface, 25, 35))
+        self.assertTrue(cs.is_pixel_white(new_surface, 60, 40))
+
+        # spot check certain points are non-white where char is drawn
+        self.assertFalse(cs.is_pixel_white(new_surface, 25, 135))
+        self.assertFalse(cs.is_pixel_white(new_surface, 60, 140))
+
 
 if __name__ == "__main__":
     unittest.main()
