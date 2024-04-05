@@ -1,6 +1,8 @@
 import cairo
 
 # MODULE CONSTANTS
+FONT_SIZE = 72
+FONT_PATH = "/usr/share/fonts/google-droid-sans-fonts/DroidSansJapanese.ttf"
 TILE_WIDTH = 100
 TILE_HEIGHT = 100
 
@@ -131,9 +133,7 @@ def draw_character(char):
         "RGBA", (TILE_WIDTH, TILE_HEIGHT), (0, 0, 0, 0)
     )  # Use fully transparent background
     draw = ImageDraw.Draw(image)
-    font = ImageFont.truetype(
-        "/usr/share/fonts/google-droid-sans-fonts/DroidSansJapanese.ttf", 72
-    )
+    font = ImageFont.truetype(FONT_PATH, FONT_SIZE)
     draw.text(
         (10, 0), char, fill=(0, 0, 0, 127), font=font
     )  # Draw the text in white with semi-opacity for better contrast in grayscale conversion

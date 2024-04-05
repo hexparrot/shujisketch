@@ -5,9 +5,7 @@ import char_surface as cs
 
 class TestCharacterSurfaceCreation(unittest.TestCase):
     def setUp(self):
-        # Setup tasks before each test method
         self.CHARACTER = "あ"
-        self.FONT_SIZE = 72
 
     def test_surface_size(self):
         surface = cs.create_blank(cairo.FORMAT_ARGB32, cs.TILE_WIDTH, cs.TILE_HEIGHT)
