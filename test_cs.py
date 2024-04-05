@@ -42,7 +42,7 @@ class TestCharacterSurfaceCreation(unittest.TestCase):
         surface = cs.create_blank(
             cairo.FORMAT_ARGB32, self.EDGE_LENGTH, self.EDGE_LENGTH
         )
-        new_surface = cs.apply_horizontal_rule(surface)
+        new_surface = cs.draw_horizontal_rule(surface)
 
         for y in [20, 80]:
             # dash on

@@ -33,7 +33,7 @@ def create_blank(format, width, height):
     return surface
 
 
-def apply_horizontal_rule(surface):
+def draw_horizontal_rule(surface):
     ctx = cairo.Context(surface)
     ctx.set_source_rgb(0.8, 0.8, 0.8)
     ctx.set_line_width(1)
