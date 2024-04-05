@@ -47,7 +47,7 @@ def draw_horizontal_rule(surface):
     return surface
 
 
-def draw_bounding_box(surface):
+def draw_bounding_box(surface, x_offset=0, y_offset=0):
     """
     Draws a bounding box of 1px width on the given Cairo ImageSurface.
     The box is positioned with horizontal lines at rows 10 and 90, and
@@ -57,6 +57,8 @@ def draw_bounding_box(surface):
     """
     # Create a drawing context for the surface
     ctx = cairo.Context(surface)
+    # apply an offset to the context
+    ctx.translate(x_offset, y_offset)
 
     # Set the line width to 1px
     ctx.set_line_width(1)

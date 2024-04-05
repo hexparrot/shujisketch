@@ -152,6 +152,7 @@ class TestCharacterSurfaceCreation(unittest.TestCase):
 
         ruled_surface = cs.draw_horizontal_rule(surface)
         boxed_surface = cs.draw_bounding_box(ruled_surface)
+        boxed_surface = cs.draw_bounding_box(boxed_surface, 100, 0)
 
         new_surface = cs.stack_surfaces(boxed_surface, stacking_surface)
 
@@ -180,6 +181,59 @@ class TestCharacterSurfaceCreation(unittest.TestCase):
 
         # Test vertical lines at x=0 and x=99
         for x in [0, 99]:
+            for y in range(10, 91):  # From row 10 to row 90 inclusive
+                # Expect non-white (line) pixels down the entire column
+                self.assertFalse(cs.is_pixel_white(new_surface, x, y))
+
+    def test_two_full_characters(self):
+        stacking_surface_one = cs.draw_character("は")
+        stacking_surface_two = cs.draw_character("は")
+
+        surface = cs.create_blank(
+            cairo.FORMAT_ARGB32, self.EDGE_LENGTH * 2, self.EDGE_LENGTH
+        )  # twice as wide
+
+        ruled_surface = cs.draw_horizontal_rule(surface)
+        boxed_surface = cs.draw_bounding_box(ruled_surface)
+        boxed_surface = cs.draw_bounding_box(boxed_surface, x_offset=100)
+
+        next_surface = cs.stack_surfaces(boxed_surface, stacking_surface_one)
+        new_surface = cs.stack_surfaces(
+            next_surface, stacking_surface_two, x_offset=100
+        )
+
+        # spot check surface is white
+        self.assertTrue(cs.is_pixel_white(new_surface, 0, 0))
+        self.assertTrue(cs.is_pixel_white(new_surface, 1, 0))
+        # spot check certain points are non-white where char is drawn
+        self.assertFalse(cs.is_pixel_white(new_surface, 25, 35))
+        self.assertFalse(cs.is_pixel_white(new_surface, 60, 40))
+        # and second char
+        self.assertFalse(cs.is_pixel_white(new_surface, 125, 35))
+        self.assertFalse(cs.is_pixel_white(new_surface, 160, 40))
+
+        for y in [20, 80]:
+            # dash on
+            self.assertFalse(cs.is_pixel_white(new_surface, 0, y))
+            self.assertFalse(cs.is_pixel_white(new_surface, 1, y))
+            # dash off
+            self.assertTrue(cs.is_pixel_white(new_surface, 2, y))
+            self.assertTrue(cs.is_pixel_white(new_surface, 3, y))
+            self.assertTrue(cs.is_pixel_white(new_surface, 4, y))
+            self.assertTrue(cs.is_pixel_white(new_surface, 5, y))
+
+        # Test horizontal lines at y=10 and y=90
+        for y in [10, 90]:
+            for x in range(0, self.EDGE_LENGTH * 2):  # twice as wide
+                # Expect non-white (line) pixels across the entire row
+                self.assertFalse(cs.is_pixel_white(new_surface, x, y))
+
+        # Test vertical lines at x=0 and x=99
+        for x in [0, 99]:
+            for y in range(10, 91):  # From row 10 to row 90 inclusive
+                # Expect non-white (line) pixels down the entire column
+                self.assertFalse(cs.is_pixel_white(new_surface, x, y))
+        for x in [100, 199]:
             for y in range(10, 91):  # From row 10 to row 90 inclusive
                 # Expect non-white (line) pixels down the entire column
                 self.assertFalse(cs.is_pixel_white(new_surface, x, y))
