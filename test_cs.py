@@ -79,6 +79,16 @@ class TestCharacterSurfaceCreation(unittest.TestCase):
                 # Expect non-white (line) pixels down the entire column
                 self.assertFalse(cs.is_pixel_white(new_surface, x, y))
 
+    def test_draw_character(self):
+        new_surface = cs.draw_character("は")
+
+        # spot check surface is white
+        self.assertTrue(cs.is_pixel_white(new_surface, 0, 0))
+        self.assertTrue(cs.is_pixel_white(new_surface, 1, 0))
+        # spot check certain points are non-white where char is drawn
+        self.assertFalse(cs.is_pixel_white(new_surface, 25, 35))
+        self.assertFalse(cs.is_pixel_white(new_surface, 60, 40))
+
 
 if __name__ == "__main__":
     unittest.main()

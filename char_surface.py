@@ -84,3 +84,29 @@ def draw_bounding_box(surface):
 
     # Return the modified surface
     return surface
+
+
+def draw_character(char):
+    from PIL import Image, ImageDraw, ImageFont
+    import numpy as np
+
+    background = Image.new("RGBA", (100, 100), (255, 255, 255, 255))
+    image = Image.new("RGBA", (100, 100), (255, 255, 255, 0))  # Transparent background
+    draw = ImageDraw.Draw(image)
+    font = ImageFont.truetype(
+        "/usr/share/fonts/google-droid-sans-fonts/DroidSansJapanese.ttf", 72
+    )
+    draw.text(
+        (10, 0), char, fill=(0, 0, 0, 127), font=font
+    )  # Black text, 10 offset to center
+
+    # Convert the PIL image to a NumPy array, then to BGRA for Cairo
+    arr = np.array(image)[:, :, [2, 1, 0, 3]]  # Convert RGBA to BGRA
+    data = arr.astype(np.uint8).flatten()
+
+    # Create a Cairo ImageSurface from the NumPy array data
+    surface = cairo.ImageSurface.create_for_data(
+        data, cairo.FORMAT_ARGB32, 100, 100, 100 * 4
+    )
+
+    return surface
