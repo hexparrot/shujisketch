@@ -268,6 +268,86 @@ class TestCharacterSurfaceCreation(unittest.TestCase):
                 # Expect non-white (line) pixels down the entire column
                 self.assertFalse(cs.is_pixel_white(new_surface, x, y))
 
+    def test_render_string(self):
+        # bounding boxes, horizontal rule present
+
+        def extract_rectangle(original_surface, x, y, rect_width, rect_height):
+            # Create a new surface to hold the extracted rectangle
+            new_surface = cairo.ImageSurface(
+                cairo.FORMAT_ARGB32, rect_width, rect_height
+            )
+            # Set up a context for the new surface
+            ctx = cairo.Context(new_surface)
+            # Specify the original surface as the source, offset to align the desired rectangle
+            ctx.set_source_surface(original_surface, -x, -y)
+            # Paint the source surface onto the new surface
+            ctx.paint()
+            return new_surface
+
+        def white_pixels_match(surface1, surface2):
+            import numpy as np
+
+            # Ensure surfaces have the same dimensions
+            if (
+                surface1.get_width() != surface2.get_width()
+                or surface1.get_height() != surface2.get_height()
+            ):
+                return False
+
+            # Access pixel data from surfaces
+            data1 = surface1.get_data()
+            data2 = surface2.get_data()
+            # Convert data to NumPy arrays for comparison (assuming ARGB32 format)
+            arr1 = np.frombuffer(data1, dtype=np.uint32).reshape(
+                (surface1.get_height(), surface1.get_width())
+            )
+            arr2 = np.frombuffer(data2, dtype=np.uint32).reshape(
+                (surface2.get_height(), surface2.get_width())
+            )
+            # Identify white pixels (0xFFFFFFFF for fully opaque white in ARGB32) (generates an array of bools)
+            white1 = arr1 == 0xFFFFFFFF
+            white2 = arr2 == 0xFFFFFFFF
+            # Check if white pixel positions match in both surfaces
+            return np.array_equal(white1, white2)
+
+        # evaluate when written horiztonally
+        text_str = "こんにちわ"
+        surface = cs.render_string(text_str)
+        self.assertEqual(surface.get_width(), 500)
+        self.assertEqual(surface.get_height(), 100)
+
+        tiles = [cs.draw_character(c) for c in text_str]
+
+        for i, t in enumerate(tiles):
+            blank_surface = cs.create_blank(
+                cairo.FORMAT_ARGB32, cs.TILE_WIDTH, cs.TILE_HEIGHT
+            )
+            new_tile = cs.stack_surfaces(blank_surface, tiles[i])
+            extracted = extract_rectangle(
+                surface, i * cs.TILE_WIDTH, 0, cs.TILE_WIDTH, cs.TILE_HEIGHT
+            )
+
+            self.assertTrue(white_pixels_match(extracted, new_tile))
+
+        # evaluate when written vertically
+        text_str = "こんにちわ"
+        surface = cs.render_string(text_str, render_vertically=True)
+        self.assertEqual(surface.get_width(), 100)
+        self.assertEqual(surface.get_height(), 500)
+
+        tiles = [cs.draw_character(c) for c in text_str]
+
+        for i, t in enumerate(tiles):
+            blank_surface = cs.create_blank(
+                cairo.FORMAT_ARGB32, cs.TILE_WIDTH, cs.TILE_HEIGHT
+            )
+            new_tile = cs.stack_surfaces(blank_surface, tiles[i])
+            extracted = extract_rectangle(
+                surface, 0, i * cs.TILE_HEIGHT, cs.TILE_WIDTH, cs.TILE_HEIGHT
+            )
+
+            self.assertTrue(white_pixels_match(extracted, new_tile))
+
 
 if __name__ == "__main__":
     unittest.main()

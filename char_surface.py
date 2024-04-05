@@ -174,3 +174,24 @@ def stack_surfaces(base_layer, top_layer, x_offset=0, y_offset=0):
     cr.paint()
 
     return base_layer
+
+
+def render_string(text_str, render_vertically=False):
+    tiles = [draw_character(c) for c in text_str]
+
+    if render_vertically:
+        surface = create_blank(
+            cairo.FORMAT_ARGB32, TILE_WIDTH, TILE_HEIGHT * len(tiles)
+        )
+
+        for i, tile in enumerate(tiles):
+            surface = stack_surfaces(surface, tile, y_offset=TILE_HEIGHT * i)
+    else:  # horizontal rendering default
+        surface = create_blank(
+            cairo.FORMAT_ARGB32, TILE_WIDTH * len(tiles), TILE_HEIGHT
+        )
+
+        for i, tile in enumerate(tiles):
+            surface = stack_surfaces(surface, tile, x_offset=TILE_WIDTH * i)
+
+    return surface
