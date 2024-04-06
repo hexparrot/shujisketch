@@ -39,7 +39,7 @@ def is_pixel_white(surface, x, y):
     return r == g == b == 255
 
 
-def create_blank(format, width, height):
+def create_blank(format, width=TILE_WIDTH, height=TILE_HEIGHT):
     """
     Return a surface object that is sized with user dimensions
     and is completely empty.
@@ -120,7 +120,14 @@ def apply_bounding_box(surface, x_offset=0, y_offset=0):
     return surface
 
 
-def draw_character(char):
+def draw_character(
+    char,
+    font_size=FONT_SIZE,
+    font_path=FONT_PATH,
+    font_alpha=FONT_ALPHA,
+    tile_width=TILE_WIDTH,
+    tile_height=TILE_HEIGHT,
+):
     """
     Draw a character on a fully transparent surface and return it.
 
@@ -132,12 +139,12 @@ def draw_character(char):
 
     # Step 1: Draw the character on a transparent background
     image = Image.new(
-        "RGBA", (TILE_WIDTH, TILE_HEIGHT), (0, 0, 0, 0)
+        "RGBA", (tile_width, tile_height), (0, 0, 0, 0)
     )  # Use fully transparent background
     draw = ImageDraw.Draw(image)
-    font = ImageFont.truetype(FONT_PATH, FONT_SIZE)
+    font = ImageFont.truetype(font_path, font_size)
     draw.text(
-        (10, 0), char, fill=(0, 0, 0, FONT_ALPHA), font=font
+        (10, 0), char, fill=(0, 0, 0, font_alpha), font=font
     )  # Draw the text in white with semi-opacity for better contrast in grayscale conversion
 
     # Step 2: Convert the image to grayscale while preserving alpha
@@ -153,7 +160,7 @@ def draw_character(char):
 
     # Step 3: Create a Cairo ImageSurface from the NumPy array data
     surface = cairo.ImageSurface.create_for_data(
-        data, cairo.FORMAT_ARGB32, TILE_WIDTH, TILE_HEIGHT, TILE_WIDTH * 4
+        data, cairo.FORMAT_ARGB32, tile_width, tile_height, tile_width * 4
     )
 
     return surface
@@ -176,22 +183,40 @@ def stack_surfaces(base_layer, top_layer, x_offset=0, y_offset=0):
     return base_layer
 
 
-def render_string(text_str, render_vertically=False):
-    tiles = [draw_character(c) for c in text_str]
+def render_string(
+    text_str,
+    render_vertically=False,
+    font_size=FONT_SIZE,
+    font_path=FONT_PATH,
+    font_alpha=FONT_ALPHA,
+    tile_width=TILE_WIDTH,
+    tile_height=TILE_HEIGHT,
+):
+    tiles = [
+        draw_character(
+            c,
+            font_size=font_size,
+            font_path=font_path,
+            font_alpha=font_alpha,
+            tile_width=tile_width,
+            tile_height=tile_height,
+        )
+        for c in text_str
+    ]
 
     if render_vertically:
         surface = create_blank(
-            cairo.FORMAT_ARGB32, TILE_WIDTH, TILE_HEIGHT * len(tiles)
+            cairo.FORMAT_ARGB32, tile_width, tile_height * len(tiles)
         )
 
         for i, tile in enumerate(tiles):
-            surface = stack_surfaces(surface, tile, y_offset=TILE_HEIGHT * i)
+            surface = stack_surfaces(surface, tile, y_offset=tile_height * i)
     else:  # horizontal rendering default
         surface = create_blank(
-            cairo.FORMAT_ARGB32, TILE_WIDTH * len(tiles), TILE_HEIGHT
+            cairo.FORMAT_ARGB32, tile_width * len(tiles), tile_height
         )
 
         for i, tile in enumerate(tiles):
-            surface = stack_surfaces(surface, tile, x_offset=TILE_WIDTH * i)
+            surface = stack_surfaces(surface, tile, x_offset=tile_width * i)
 
     return surface
