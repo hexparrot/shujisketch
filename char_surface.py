@@ -147,7 +147,7 @@ def draw_character(
             offset = 10
         else:
             # For sizes greater than 72
-            offset = 10  # Default to 10
+            offset = 15  # Default to 10
 
         return offset
 

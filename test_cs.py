@@ -309,26 +309,79 @@ class TestCharacterSurfaceCreation(unittest.TestCase):
 
             self.assertTrue(cs.white_pixels_match(extracted, new_tile))
 
-    def test_render_at_fifty_size(self):
+    def test_render_at_half_size(self):
         text_str = "こんにちわ"
-        reduced_font_size = 36
+        adjusted_font_size = 36
+        adjusted_tile_size = 50
         surface = cs.render_string(
-            text_str, font_size=reduced_font_size, tile_width=50, tile_height=50
+            text_str,
+            font_size=adjusted_font_size,
+            tile_width=adjusted_tile_size,
+            tile_height=adjusted_tile_size,
         )
-        self.assertEqual(surface.get_width(), 250)
-        self.assertEqual(surface.get_height(), 50)
+        self.assertEqual(surface.get_width(), adjusted_tile_size * len(text_str))
+        self.assertEqual(surface.get_height(), adjusted_tile_size)
 
         tiles = [
             cs.draw_character(
-                c, font_size=reduced_font_size, tile_width=50, tile_height=50
+                c,
+                font_size=adjusted_font_size,
+                tile_width=adjusted_tile_size,
+                tile_height=adjusted_tile_size,
             )
             for c in text_str
         ]
 
         for i, t in enumerate(tiles):
-            blank_surface = cs.create_blank(cairo.FORMAT_ARGB32, 50, 50)
+            blank_surface = cs.create_blank(
+                cairo.FORMAT_ARGB32, adjusted_tile_size, adjusted_tile_size
+            )
             new_tile = cs.stack_surfaces(blank_surface, tiles[i])
-            extracted = cs.extract_rectangle(surface, i * 50, 0, 50, 50)
+            extracted = cs.extract_rectangle(
+                surface,
+                i * adjusted_tile_size,
+                0,
+                adjusted_tile_size,
+                adjusted_tile_size,
+            )
+
+            self.assertTrue(cs.white_pixels_match(extracted, new_tile))
+
+    def test_render_at_double_size(self):
+        text_str = "こんにちわ"
+        adjusted_font_size = 144
+        adjusted_tile_size = 200
+        surface = cs.render_string(
+            text_str,
+            font_size=adjusted_font_size,
+            tile_width=adjusted_tile_size,
+            tile_height=adjusted_tile_size,
+        )
+        self.assertEqual(surface.get_width(), adjusted_tile_size * len(text_str))
+        self.assertEqual(surface.get_height(), adjusted_tile_size)
+
+        tiles = [
+            cs.draw_character(
+                c,
+                font_size=adjusted_font_size,
+                tile_width=adjusted_tile_size,
+                tile_height=adjusted_tile_size,
+            )
+            for c in text_str
+        ]
+
+        for i, t in enumerate(tiles):
+            blank_surface = cs.create_blank(
+                cairo.FORMAT_ARGB32, adjusted_tile_size, adjusted_tile_size
+            )
+            new_tile = cs.stack_surfaces(blank_surface, tiles[i])
+            extracted = cs.extract_rectangle(
+                surface,
+                i * adjusted_tile_size,
+                0,
+                adjusted_tile_size,
+                adjusted_tile_size,
+            )
 
             self.assertTrue(cs.white_pixels_match(extracted, new_tile))
 
