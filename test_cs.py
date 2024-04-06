@@ -539,37 +539,6 @@ R	10	ヒ	0	0	3.5937597e+00"""
             msg="The values are not close enough.",
         )
 
-    def test_find_best_match(self):
-        target_char = "に"
-        candidates = [
-            {"rank": 1, "character": "に", "score": 2.2526079},
-            {"rank": 2, "character": "仁", "score": 2.8243349},
-            {"rank": 3, "character": "c", "score": 3.2934342},
-        ]
-
-        # Test for an exact match
-        self.assertEqual(
-            cs.find_best_match(target_char, candidates),
-            "に",
-            "Failed to find the exact match.",
-        )
-
-        # Test for the best guess match when no exact match is available
-        # keep in mind, あ will never actually yield に, this is a possibility only
-        # because the candidates are hardcoded from above, and this is testing
-        # that the top character is always returned, just cause
-        target_char_no_exact_match = "あ"
-        self.assertEqual(
-            cs.find_best_match(target_char_no_exact_match, candidates),
-            candidates[0]["character"],
-            "Failed to return the best guess match.",
-        )
-
-        # Test with no candidates
-        self.assertIsNone(
-            cs.find_best_match("あ", []), "Expected None for no candidates available."
-        )
-
     def test_single_char_reading(self):
         target_char = "に"
         surface = cs.render_string(

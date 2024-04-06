@@ -556,25 +556,3 @@ def parse_nhocr_output(output):
         else:
             pass  # Skip lines that don't match the expected format
     return characters
-
-
-def find_best_match(target_char, candidates):
-    """
-    Finds the best match for the target character from a list of candidates.
-    Each candidate is a dictionary with 'rank', 'character', and 'score' keys.
-
-    :param target_char: The character to find a match for.
-    :param candidates: List of candidate dictionaries.
-    return The best match character or None if no approximate/best guess is found.
-    """
-    exact_matches = [c for c in candidates if c["character"] == target_char]
-    if exact_matches:
-        # If there are exact matches, return the one with the lowest rank
-        return sorted(exact_matches, key=lambda x: x["rank"])[0]["character"]
-
-    # If no exact match, return the candidate with the lowest rank
-    return (
-        sorted(candidates, key=lambda x: x["rank"])[0]["character"]
-        if candidates
-        else None
-    )
