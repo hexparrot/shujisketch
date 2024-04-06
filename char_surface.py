@@ -56,7 +56,7 @@ def create_blank(format, width=TILE_WIDTH, height=TILE_HEIGHT):
     return surface
 
 
-def apply_horizontal_rule(surface, y_offset=0):
+def apply_horizontal_rule(surface, y_offset=0, rules=[20, 80]):
     """
     Return a surface object with a newly applied horizontal rule
     and return the surface back.
@@ -69,7 +69,7 @@ def apply_horizontal_rule(surface, y_offset=0):
     ctx.set_dash([2.0, 4.0])
     ctx.translate(0, y_offset)
 
-    for y in [20, 80]:
+    for y in rules:
         ctx.move_to(0, y)
         ctx.line_to(surface.get_width(), y)
         ctx.stroke()
@@ -137,6 +137,20 @@ def draw_character(
     import numpy as np
     import cairo
 
+    def calculate_centering_offset(object_size):
+        # Define offsets based on object size ranges
+        if object_size <= 18:
+            offset = 2
+        elif object_size <= 36:
+            offset = 5
+        elif object_size <= 72:
+            offset = 10
+        else:
+            # For sizes greater than 72
+            offset = 10  # Default to 10
+
+        return offset
+
     # Step 1: Draw the character on a transparent background
     image = Image.new(
         "RGBA", (tile_width, tile_height), (0, 0, 0, 0)
@@ -144,7 +158,10 @@ def draw_character(
     draw = ImageDraw.Draw(image)
     font = ImageFont.truetype(font_path, font_size)
     draw.text(
-        (10, 0), char, fill=(0, 0, 0, font_alpha), font=font
+        (calculate_centering_offset(font_size), 0),
+        char,
+        fill=(0, 0, 0, font_alpha),
+        font=font,
     )  # Draw the text in white with semi-opacity for better contrast in grayscale conversion
 
     # Step 2: Convert the image to grayscale while preserving alpha
@@ -230,3 +247,42 @@ def render_string(
             surface = stack_surfaces(surface, tile, x_offset=tile_width * i)
 
     return surface
+
+
+def extract_rectangle(original_surface, x, y, rect_width, rect_height):
+    # Create a new surface to hold the extracted rectangle
+    new_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, rect_width, rect_height)
+    # Set up a context for the new surface
+    ctx = cairo.Context(new_surface)
+    # Specify the original surface as the source, offset to align the desired rectangle
+    ctx.set_source_surface(original_surface, -x, -y)
+    # Paint the source surface onto the new surface
+    ctx.paint()
+    return new_surface
+
+
+def white_pixels_match(surface1, surface2):
+    import numpy as np
+
+    # Ensure surfaces have the same dimensions
+    if (
+        surface1.get_width() != surface2.get_width()
+        or surface1.get_height() != surface2.get_height()
+    ):
+        return False
+
+    # Access pixel data from surfaces
+    data1 = surface1.get_data()
+    data2 = surface2.get_data()
+    # Convert data to NumPy arrays for comparison (assuming ARGB32 format)
+    arr1 = np.frombuffer(data1, dtype=np.uint32).reshape(
+        (surface1.get_height(), surface1.get_width())
+    )
+    arr2 = np.frombuffer(data2, dtype=np.uint32).reshape(
+        (surface2.get_height(), surface2.get_width())
+    )
+    # Identify white pixels (0xFFFFFFFF for fully opaque white in ARGB32) (generates an array of bools)
+    white1 = arr1 == 0xFFFFFFFF
+    white2 = arr2 == 0xFFFFFFFF
+    # Check if white pixel positions match in both surfaces
+    return np.array_equal(white1, white2)
