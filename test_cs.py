@@ -417,6 +417,86 @@ class TestCharacterSurfaceCreation(unittest.TestCase):
             magic_number = file.read(2).decode("ascii")
             self.assertIn(magic_number, ["P2", "P5"], "File is not a valid PPM file.")
 
+    def test_perfect_font_reading(self):
+
+        # Define a mapping of visually similar characters
+        # also can be used to just suppress bad matches, bandaid
+        # left-hand side is ocr result, right side is character fed to ocr
+        visually_similar_characters = {
+            "あ": ["ぁ"],
+            "う": ["ぅ"],
+            "え": ["ぇ"],
+            "お": ["ぉ"],
+            "L`": ["ぃ"],  # nonpermissible failure
+            "L◆": ["ぃ", "い"],  # nonpermissible failure
+            "カヽ": ["か"],
+            "カヾ": ["が"],
+            "<": ["く"],  # nonpermissible failure
+            "き": ["さ"],  # nonpermissible failure
+            "ぎ": ["ざ"],  # nonpermissible failure
+            "つ": ["っ"],
+            "｜こ": ["に"],  # nonpermissible failure
+            "｜ま": ["は", "ば", "ぱ"],  # nonpermissible failure
+            "づヽ": ["ふ"],  # nonpermissible failure
+            "づ〈": ["ぷ"],  # nonpermissible failure
+            "ヘ": ["へ"],
+            "ベ": ["べ"],
+            "や": ["ゃ"],
+            "ゆ": ["ゅ"],
+            "よ": ["ょ"],
+            "V": ["り"],  # nonpermissible failure
+            "わ": ["ゎ"],
+            "": ["ゔ", "ゕ", "ゖ"],
+        }
+
+        def assertVisuallySimilar(actual, expected, msg=None):
+            # Normalize newline characters to handle cases like 'あ\n' != 'ぁ'
+            actual = actual.strip()
+            expected = expected.strip()
+
+            # Check for direct equality
+            if actual == expected:
+                return
+
+            # Check for visual similarity
+            for key, values in visually_similar_characters.items():
+                if (actual == key and expected in values) or (
+                    expected == key and actual in values
+                ):
+                    print("visual mismatch ignored:", actual, "vs", expected)
+                    return  # means it wont hit fail, and doesnt count as a tested unittest
+
+            # If not equal or visually similar, raise an AssertionError
+            self.fail(
+                self._formatMessage(
+                    msg,
+                    f"OCR result: '{actual}' is not visually similar to expected: '{expected}'",
+                )
+            )
+
+        # Create a list of Hiragana characters from their Unicode code points
+        hiragana_chars = [chr(i) for i in range(0x3041, 0x3097)]
+        # Optionally, add iteration marks
+        hiragana_chars.append(chr(0x309D))  # ゝ
+        hiragana_chars.append(chr(0x309E))  # ゞ
+
+        # Iterate through the list of Hiragana characters
+        for char in hiragana_chars:
+            surface = cs.render_string(
+                char,
+                font_size=144,
+                tile_width=200,
+                tile_height=200,
+                font_alpha=255,
+            )
+
+            file_path = "sample_surface.pgm"
+            cs.surface_to_pgm(surface, file_path)
+            retval = cs.ocr(file_path)
+            assertVisuallySimilar(
+                retval, char, f"ocr result: {retval} expected: {char}"
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

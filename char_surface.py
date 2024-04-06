@@ -346,3 +346,17 @@ def surface_to_pgm(surface, filepath, background_color=(255, 255, 255)):
 
         # Write the grayscale data as binary
         grayscale.tofile(f)
+
+
+def ocr(filepath):
+    import subprocess
+
+    command = ["nhocr", "-line", "-o", "-", filepath]  # load the file next
+    try:
+        output = subprocess.check_output(
+            command, stderr=subprocess.STDOUT, universal_newlines=True
+        )
+        return output
+    except subprocess.CalledProcessError as e:
+        print(f"Error executing nhocr: {e.output}")
+        return e.output
