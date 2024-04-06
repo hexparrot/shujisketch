@@ -306,3 +306,43 @@ def white_pixels_match(surface1, surface2):
     white2 = arr2 == 0xFFFFFFFF
     # Check if white pixel positions match in both surfaces
     return np.array_equal(white1, white2)
+
+
+def surface_to_pgm(surface, filepath, background_color=(255, 255, 255)):
+    """
+    Saves a cairo.ImageSurface to a binary PGM file, incorporating alpha blending.
+
+    :param surface: The Cairo ImageSurface to save.
+    :param filepath: The output filepath for the PGM file.
+    :param background_color: The RGB background color for alpha blending.
+    """
+    import numpy as np
+
+    surface.flush()  # Ensure all drawing operations are flushed
+    width, height = surface.get_width(), surface.get_height()
+    data = surface.get_data()
+
+    # Convert the data to a Numpy array (shape: height x width x 4)
+    arr = np.ndarray(shape=(height, width, 4), dtype=np.uint8, buffer=data)
+
+    # Normalize alpha values to range [0, 1]
+    alpha = arr[:, :, 3] / 255.0
+    # Expand dimensions of alpha for broadcasting
+    alpha_expanded = alpha[:, :, np.newaxis]
+
+    # Perform alpha blending: pixel = alpha * pixel + (1 - alpha) * background
+    blended = alpha_expanded * arr[:, :, :3] + (1 - alpha_expanded) * np.array(
+        background_color
+    )
+
+    # Convert blended RGB to grayscale using luminosity method
+    grayscale = (
+        0.299 * blended[:, :, 0] + 0.587 * blended[:, :, 1] + 0.114 * blended[:, :, 2]
+    ).astype(np.uint8)
+
+    with open(filepath, "wb") as f:
+        # Write the binary PGM header
+        f.write(bytearray(f"P5\n{width} {height}\n255\n", "ascii"))
+
+        # Write the grayscale data as binary
+        grayscale.tofile(f)

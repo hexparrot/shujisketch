@@ -1,0 +1,5 @@
+__pycache__/
+
+# files from unittest
+result
+sample_surface.pgm

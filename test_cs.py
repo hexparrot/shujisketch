@@ -393,6 +393,30 @@ class TestCharacterSurfaceCreation(unittest.TestCase):
             # asserts that placement and extraction are pixel-perfect
             self.assertTrue(cs.white_pixels_match(extracted, new_tile))
 
+    def test_save_surface_to_pgm(self):
+        import os
+
+        text_str = "こんにちわ"
+        adjusted_font_size = 144
+        adjusted_tile_size = 200
+        surface = cs.render_string(
+            text_str,
+            font_size=adjusted_font_size,
+            tile_width=adjusted_tile_size,
+            tile_height=adjusted_tile_size,
+        )
+
+        file_path = "sample_surface.pgm"
+        cs.surface_to_pgm(surface, file_path)
+
+        # Check if the file exists
+        self.assertTrue(os.path.exists(file_path), "File does not exist.")
+
+        # Open the file and check the first two bytes for the PPM magic number
+        with open(file_path, "rb") as file:
+            magic_number = file.read(2).decode("ascii")
+            self.assertIn(magic_number, ["P2", "P5"], "File is not a valid PPM file.")
+
 
 if __name__ == "__main__":
     unittest.main()
