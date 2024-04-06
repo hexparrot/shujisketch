@@ -250,6 +250,15 @@ def render_string(
 
 
 def extract_rectangle(original_surface, x, y, rect_width, rect_height):
+    """
+    Create a surface from an existing surface, duplicating its contents
+
+    :param original_surface: the surface to copy from
+    :param x: x offset to move capturing window
+    :param y: y offset to move capturing window
+    :param rect_width: width of the exporting surface rectangle
+    :param rect_height: height of the exporting surface rectangle
+    """
     # Create a new surface to hold the extracted rectangle
     new_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, rect_width, rect_height)
     # Set up a context for the new surface
@@ -262,6 +271,17 @@ def extract_rectangle(original_surface, x, y, rect_width, rect_height):
 
 
 def white_pixels_match(surface1, surface2):
+    """
+    Check that an image shares all the same white pixels.
+
+    Many surfaces from this module will have white backgrounds;
+    this function allows easy equivalence testing, as any pixels
+    that are not full-on (255,255,255) would make the resulting
+    arrays not identical, providing an easy boolean comparison.
+
+    :param surface1: reference surface
+    :param surface2: compared surface
+    """
     import numpy as np
 
     # Ensure surfaces have the same dimensions
