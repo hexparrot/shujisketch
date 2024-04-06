@@ -348,8 +348,92 @@ def surface_to_pgm(surface, filepath, background_color=(255, 255, 255)):
         grayscale.tofile(f)
 
 
-def ocr(filepath, single_char_reading=False):
+def ocr(filepath, single_char_reading=False, known_translation=None):
     import subprocess
+    import numpy as np
+
+    def pgm_to_cairo_image_surface(pgm_filepath):
+        """
+        Creates a cairo.ImageSurface from a binary PGM file.
+        Since it is coming from PGM, it's an 8bit A8 (alpha) representation.
+
+        :param pgm_filepath: The path to the PGM file.
+        :return: A new cairo.ImageSurface containing the image data.
+        """
+        with open(pgm_filepath, "rb") as f:
+            header = f.readline().strip()
+            if header != b"P5":
+                raise ValueError(
+                    "Unsupported PGM format; only binary PGM (P5) is supported."
+                )
+
+            # Skip comment lines and read dimensions
+            dimensions_line = f.readline().strip()
+            while dimensions_line.startswith(b"#"):
+                dimensions_line = f.readline().strip()
+            width, height = map(int, dimensions_line.split())
+
+            # Read max value (and potentially skip comment lines)
+            maxval_line = f.readline().strip()
+            while maxval_line.startswith(b"#"):
+                maxval_line = f.readline().strip()
+            maxval = int(maxval_line)
+
+            # Ensure 8-bit PGM
+            if maxval > 255:
+                raise ValueError(
+                    "Unsupported maxval; only 8-bit PGM files are supported."
+                )
+
+            # Read the image data and prepare it
+            image_data = np.fromfile(f, dtype=np.uint8).reshape((height, width))
+            data_bytes = np.copy(image_data).astype(np.uint8).tobytes()
+
+            # Create a cairo.ImageSurface
+            stride = cairo.ImageSurface.format_stride_for_width(cairo.FORMAT_A8, width)
+            # Use bytearray to ensure the buffer is writable
+            data_bytearray = bytearray(data_bytes)
+            surface = cairo.ImageSurface.create_for_data(
+                data_bytearray, cairo.FORMAT_A8, width, height, stride
+            )
+
+        return surface
+
+    def pgm_to_inverted_argb32(filepath):
+        """
+        Load a PGM file which is 8 bit and grayscale
+        This requires converting it to ARGB and fabricating color data
+        because PGM is grayscale and treated more like A8/alpha layer data only
+        Set background to white, use the a8 mask (pgm) to fill in the black
+        :param filepath: The path to the PGM file.
+        :return: A new cairo.ImageSurface containing the image data.
+        """
+        # Load the PGM file into an A8 surface
+        a8_surface = pgm_to_cairo_image_surface(filepath)
+        width, height = a8_surface.get_width(), a8_surface.get_height()
+        a8_data = np.ndarray(
+            shape=(height, width), dtype=np.uint8, buffer=a8_surface.get_data()
+        )
+
+        # Prepare a new ARGB32 surface
+        argb32_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
+        ctx = cairo.Context(argb32_surface)
+
+        # Inversion: Set the background to black and use white for the text
+        # Fill the background
+        ctx.set_source_rgba(0, 0, 0, 1)  # Black background
+        ctx.paint()
+
+        # Set text color
+        for y in range(height):
+            for x in range(width):
+                alpha = a8_data[y, x] / 255.0  # Normalize alpha
+                if alpha > 0:  # Apply white text based on the alpha
+                    ctx.set_source_rgba(1, 1, 1, alpha)  # White with original alpha
+                    ctx.rectangle(x, y, 1, 1)
+                    ctx.fill()
+
+        return argb32_surface
 
     if single_char_reading:  # when requesting candidate lists
         command = ["nhocr", "-mchar", "-o", "-", filepath]  # load the file next
@@ -363,12 +447,35 @@ def ocr(filepath, single_char_reading=False):
             print(f"Error executing nhocr: {e.output}")
             return e.output
     else:  # default expected behavior, -line behavior, even if a single character
+        import tempfile
+
         command = ["nhocr", "-line", "-o", "-", filepath]  # load the file next
         try:
             output = subprocess.check_output(
                 command, stderr=subprocess.STDOUT, universal_newlines=True
             )
-            return output.strip().replace(" ", "")
+            cleaned = output.strip().replace(" ", "")
+            if known_translation and len(cleaned) != len(known_translation):
+                # known expected value, but didn't get that from ocr
+                # let's split up the filepath pgm by tilesize and run each
+                # character as a single_char_reading
+
+                inverted = pgm_to_inverted_argb32(filepath)
+                retval_chars = []
+                for i, char in enumerate(known_translation):
+                    extracted = extract_rectangle(
+                        inverted, i * TILE_WIDTH, 0, TILE_WIDTH, TILE_HEIGHT
+                    )
+                    with tempfile.NamedTemporaryFile(
+                        suffix=".pgm", delete=True
+                    ) as tmpfile:
+                        surface_to_pgm(extracted, tmpfile.name)
+                        retval = ocr(tmpfile.name, single_char_reading=True)
+                        retval_chars.append(retval)
+
+                return "".join(retval_chars)
+            else:
+                return cleaned
         except subprocess.CalledProcessError as e:
             print(f"Error executing nhocr: {e.output}")
             return e.output
