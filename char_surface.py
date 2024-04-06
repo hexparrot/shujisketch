@@ -348,23 +348,30 @@ def surface_to_pgm(surface, filepath, background_color=(255, 255, 255)):
         grayscale.tofile(f)
 
 
-def ocr(filepath):
-    """
-    Reads a PGM file with nhocr returning the best -line reading
-
-    :param filepath: The input filepath for the PGM file.
-    """
+def ocr(filepath, single_char_reading=False):
     import subprocess
 
-    command = ["nhocr", "-line", "-o", "-", filepath]  # load the file next
-    try:
-        output = subprocess.check_output(
-            command, stderr=subprocess.STDOUT, universal_newlines=True
-        )
-        return output
-    except subprocess.CalledProcessError as e:
-        print(f"Error executing nhocr: {e.output}")
-        return e.output
+    if single_char_reading:  # when requesting candidate lists
+        command = ["nhocr", "-mchar", "-o", "-", filepath]  # load the file next
+        try:
+            output = subprocess.check_output(
+                command, stderr=subprocess.STDOUT, universal_newlines=True
+            )
+            candidates = parse_nhocr_output(output)
+            return candidates[0]["character"]
+        except subprocess.CalledProcessError as e:
+            print(f"Error executing nhocr: {e.output}")
+            return e.output
+    else:  # default expected behavior, -line behavior, even if a single character
+        command = ["nhocr", "-line", "-o", "-", filepath]  # load the file next
+        try:
+            output = subprocess.check_output(
+                command, stderr=subprocess.STDOUT, universal_newlines=True
+            )
+            return output
+        except subprocess.CalledProcessError as e:
+            print(f"Error executing nhocr: {e.output}")
+            return e.output
 
 
 def parse_nhocr_output(output):

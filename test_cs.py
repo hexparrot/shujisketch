@@ -570,6 +570,23 @@ R	10	ヒ	0	0	3.5937597e+00"""
             cs.find_best_match("あ", []), "Expected None for no candidates available."
         )
 
+    def test_single_char_reading(self):
+        # "｜こ": ["に"],  # nonpermissible failure
+        target_char = "に"
+        surface = cs.render_string(
+            target_char,
+            font_size=144,
+            tile_width=200,
+            tile_height=200,
+            font_alpha=255,
+        )
+
+        file_path = "sample_surface.pgm"
+        cs.surface_to_pgm(surface, file_path)
+
+        retval = cs.ocr(file_path, single_char_reading=True)
+        self.assertEqual(retval, target_char)
+
 
 if __name__ == "__main__":
     unittest.main()
