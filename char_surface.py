@@ -192,6 +192,16 @@ def render_string(
     tile_width=TILE_WIDTH,
     tile_height=TILE_HEIGHT,
 ):
+    """
+    Render a surface with a string of characters against a white bg.
+
+    :param text_str: a string to print
+    :param font_size: the font size
+    :param font_path: absolute path to requested font TTF file
+    :param font_alpha: alpha channel value of the text
+    :param tile_width: width of each individual tile
+    :param tile_height: height of each individual tile
+    """
     tiles = [
         draw_character(
             c,
