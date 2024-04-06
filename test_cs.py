@@ -319,9 +319,11 @@ class TestCharacterSurfaceCreation(unittest.TestCase):
             tile_width=adjusted_tile_size,
             tile_height=adjusted_tile_size,
         )
+        # Check width and height dimensions
         self.assertEqual(surface.get_width(), adjusted_tile_size * len(text_str))
         self.assertEqual(surface.get_height(), adjusted_tile_size)
 
+        # get an imagesurface for all characters
         tiles = [
             cs.draw_character(
                 c,
@@ -332,6 +334,7 @@ class TestCharacterSurfaceCreation(unittest.TestCase):
             for c in text_str
         ]
 
+        # in order, place these surfaces onto a single blank surface, as tiles
         for i, t in enumerate(tiles):
             blank_surface = cs.create_blank(
                 cairo.FORMAT_ARGB32, adjusted_tile_size, adjusted_tile_size
@@ -339,12 +342,13 @@ class TestCharacterSurfaceCreation(unittest.TestCase):
             new_tile = cs.stack_surfaces(blank_surface, tiles[i])
             extracted = cs.extract_rectangle(
                 surface,
-                i * adjusted_tile_size,
-                0,
+                i * adjusted_tile_size,  # x-offset scales here
+                0,  # y-offset unchanged
                 adjusted_tile_size,
                 adjusted_tile_size,
             )
 
+            # asserts that placement and extraction are pixel-perfect
             self.assertTrue(cs.white_pixels_match(extracted, new_tile))
 
     def test_render_at_double_size(self):
@@ -357,9 +361,11 @@ class TestCharacterSurfaceCreation(unittest.TestCase):
             tile_width=adjusted_tile_size,
             tile_height=adjusted_tile_size,
         )
+        # Check width and height dimensions
         self.assertEqual(surface.get_width(), adjusted_tile_size * len(text_str))
         self.assertEqual(surface.get_height(), adjusted_tile_size)
 
+        # get an imagesurface for all characters
         tiles = [
             cs.draw_character(
                 c,
@@ -370,6 +376,7 @@ class TestCharacterSurfaceCreation(unittest.TestCase):
             for c in text_str
         ]
 
+        # in order, place these surfaces onto a single blank surface, as tiles
         for i, t in enumerate(tiles):
             blank_surface = cs.create_blank(
                 cairo.FORMAT_ARGB32, adjusted_tile_size, adjusted_tile_size
@@ -377,12 +384,13 @@ class TestCharacterSurfaceCreation(unittest.TestCase):
             new_tile = cs.stack_surfaces(blank_surface, tiles[i])
             extracted = cs.extract_rectangle(
                 surface,
-                i * adjusted_tile_size,
-                0,
+                i * adjusted_tile_size,  # x-offset scales here
+                0,  # y-offset unchanged
                 adjusted_tile_size,
                 adjusted_tile_size,
             )
 
+            # asserts that placement and extraction are pixel-perfect
             self.assertTrue(cs.white_pixels_match(extracted, new_tile))
 
 
