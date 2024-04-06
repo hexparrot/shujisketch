@@ -620,6 +620,40 @@ R	10	ヒ	0	0	3.5937597e+00"""
         # '|=|=' != 'にに'
         self.assertEqual(retval, text_str)
 
+    def test_line_correction_char_count_half_size(self):
+        text_str = "にに"
+        surface = cs.render_string(
+            text_str,
+            font_size=36,
+            tile_width=50,
+            tile_height=50,
+            font_alpha=255,
+        )
+
+        file_path = "sample_surface.pgm"
+        cs.surface_to_pgm(surface, file_path)
+
+        retval = cs.ocr(file_path, known_translation=text_str)
+        # '|=|=' != 'にに'
+        self.assertEqual(retval, text_str)
+
+    def test_line_correction_char_count_double_size(self):
+        text_str = "にに"
+        surface = cs.render_string(
+            text_str,
+            font_size=144,
+            tile_width=200,
+            tile_height=200,
+            font_alpha=255,
+        )
+
+        file_path = "sample_surface.pgm"
+        cs.surface_to_pgm(surface, file_path)
+
+        retval = cs.ocr(file_path, known_translation=text_str)
+        # '|=|=' != 'にに'
+        self.assertEqual(retval, text_str)
+
 
 if __name__ == "__main__":
     unittest.main()

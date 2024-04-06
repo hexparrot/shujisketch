@@ -461,10 +461,17 @@ def ocr(filepath, single_char_reading=False, known_translation=None):
                 # character as a single_char_reading
 
                 inverted = pgm_to_inverted_argb32(filepath)
+                adjusted_tile_width = int(inverted.get_width() / len(known_translation))
+                adjusted_tile_height = inverted.get_height()
+
                 retval_chars = []
                 for i, char in enumerate(known_translation):
                     extracted = extract_rectangle(
-                        inverted, i * TILE_WIDTH, 0, TILE_WIDTH, TILE_HEIGHT
+                        inverted,
+                        i * adjusted_tile_width,
+                        0,
+                        adjusted_tile_width,
+                        adjusted_tile_height,
                     )
                     with tempfile.NamedTemporaryFile(
                         suffix=".pgm", delete=True
