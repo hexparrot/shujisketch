@@ -654,6 +654,60 @@ R	10	ヒ	0	0	3.5937597e+00"""
         # '|=|=' != 'にに'
         self.assertEqual(retval, text_str)
 
+    def test_line_correction_char_count_vertical(self):
+        text_str = "にに"
+        surface = cs.render_string(
+            text_str,
+            font_size=72,
+            tile_width=100,
+            tile_height=100,
+            font_alpha=255,
+            render_vertically=True,
+        )
+
+        file_path = "sample_surface.pgm"
+        cs.surface_to_pgm(surface, file_path)
+
+        retval = cs.ocr(file_path, known_translation=text_str, render_vertically=True)
+        # '|=|=' != 'にに'
+        self.assertEqual(retval, text_str)
+
+    def test_line_correction_char_count_half_size_vertical(self):
+        text_str = "にに"
+        surface = cs.render_string(
+            text_str,
+            font_size=36,
+            tile_width=52,
+            tile_height=52,
+            font_alpha=255,
+            render_vertically=True,
+        )
+
+        file_path = "sample_surface.pgm"
+        cs.surface_to_pgm(surface, file_path)
+
+        retval = cs.ocr(file_path, known_translation=text_str, render_vertically=True)
+        # '|=|=' != 'にに'
+        self.assertEqual(retval, text_str)
+
+    def test_line_correction_char_count_double_size_vertical(self):
+        text_str = "にに"
+        surface = cs.render_string(
+            text_str,
+            font_size=144,
+            tile_width=200,
+            tile_height=200,
+            font_alpha=255,
+            render_vertically=True,
+        )
+
+        file_path = "sample_surface.pgm"
+        cs.surface_to_pgm(surface, file_path)
+
+        retval = cs.ocr(file_path, known_translation=text_str, render_vertically=True)
+        # '|=|=' != 'にに'
+        self.assertEqual(retval, text_str)
+
 
 if __name__ == "__main__":
     unittest.main()

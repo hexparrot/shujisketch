@@ -348,7 +348,9 @@ def surface_to_pgm(surface, filepath, background_color=(255, 255, 255)):
         grayscale.tofile(f)
 
 
-def ocr(filepath, single_char_reading=False, known_translation=None):
+def ocr(
+    filepath, single_char_reading=False, known_translation=None, render_vertically=False
+):
     import subprocess
     import numpy as np
 
@@ -367,31 +369,43 @@ def ocr(filepath, single_char_reading=False, known_translation=None):
                     "Unsupported PGM format; only binary PGM (P5) is supported."
                 )
 
-            # Skip comment lines and read dimensions
             dimensions_line = f.readline().strip()
             while dimensions_line.startswith(b"#"):
                 dimensions_line = f.readline().strip()
             width, height = map(int, dimensions_line.split())
 
-            # Read max value (and potentially skip comment lines)
             maxval_line = f.readline().strip()
             while maxval_line.startswith(b"#"):
                 maxval_line = f.readline().strip()
             maxval = int(maxval_line)
 
-            # Ensure 8-bit PGM
             if maxval > 255:
                 raise ValueError(
                     "Unsupported maxval; only 8-bit PGM files are supported."
                 )
 
-            # Read the image data and prepare it
-            image_data = np.fromfile(f, dtype=np.uint8).reshape((height, width))
+            # Correctly calculate the expected buffer size
+            stride = cairo.ImageSurface.format_stride_for_width(cairo.FORMAT_A8, width)
+            expected_size = height * stride
+
+            # Adjust the reading of image data to match the expected size
+            image_data = np.fromfile(
+                f, dtype=np.uint8, count=expected_size
+            )  # Read exactly 'expected_size' bytes
+
+            if image_data.size < expected_size:
+                raise ValueError(
+                    f"Read buffer size is too small: {image_data.size} < {expected_size}"
+                )
+
+            image_data = image_data.reshape(
+                (height, stride)
+            )  # Reshape according to height and stride
+            # Note: The rightmost columns in each row might be padding and should not affect the image content
+
             data_bytes = np.copy(image_data).astype(np.uint8).tobytes()
 
-            # Create a cairo.ImageSurface
-            stride = cairo.ImageSurface.format_stride_for_width(cairo.FORMAT_A8, width)
-            # Use bytearray to ensure the buffer is writable
+            # Create the Cairo surface
             data_bytearray = bytearray(data_bytes)
             surface = cairo.ImageSurface.create_for_data(
                 data_bytearray, cairo.FORMAT_A8, width, height, stride
@@ -455,30 +469,54 @@ def ocr(filepath, single_char_reading=False, known_translation=None):
                 command, stderr=subprocess.STDOUT, universal_newlines=True
             )
             cleaned = output.strip().replace(" ", "")
-            if known_translation and len(cleaned) != len(known_translation):
+            if known_translation and cleaned != known_translation:
                 # known expected value, but didn't get that from ocr
                 # let's split up the filepath pgm by tilesize and run each
                 # character as a single_char_reading
 
                 inverted = pgm_to_inverted_argb32(filepath)
-                adjusted_tile_width = int(inverted.get_width() / len(known_translation))
-                adjusted_tile_height = inverted.get_height()
-
                 retval_chars = []
-                for i, char in enumerate(known_translation):
-                    extracted = extract_rectangle(
-                        inverted,
-                        i * adjusted_tile_width,
-                        0,
-                        adjusted_tile_width,
-                        adjusted_tile_height,
+
+                if render_vertically:  # VERTICAL TILE BREAKDOWN
+                    adjusted_tile_width = inverted.get_width()
+                    adjusted_tile_height = int(
+                        inverted.get_height() / len(known_translation)
                     )
-                    with tempfile.NamedTemporaryFile(
-                        suffix=".pgm", delete=True
-                    ) as tmpfile:
-                        surface_to_pgm(extracted, tmpfile.name)
-                        retval = ocr(tmpfile.name, single_char_reading=True)
-                        retval_chars.append(retval)
+
+                    for i, char in enumerate(known_translation):
+                        extracted = extract_rectangle(
+                            inverted,
+                            0,
+                            i * adjusted_tile_height,
+                            adjusted_tile_width,
+                            adjusted_tile_height,
+                        )
+                        with tempfile.NamedTemporaryFile(
+                            suffix=".pgm", delete=True
+                        ) as tmpfile:
+                            surface_to_pgm(extracted, tmpfile.name)
+                            retval = ocr(tmpfile.name, single_char_reading=True)
+                            retval_chars.append(retval)
+                else:  # DEFAULT HORIZONTAL TILE BREAKDOWN
+                    adjusted_tile_width = int(
+                        inverted.get_width() / len(known_translation)
+                    )
+                    adjusted_tile_height = inverted.get_height()
+
+                    for i, char in enumerate(known_translation):
+                        extracted = extract_rectangle(
+                            inverted,
+                            i * adjusted_tile_width,
+                            0,
+                            adjusted_tile_width,
+                            adjusted_tile_height,
+                        )
+                        with tempfile.NamedTemporaryFile(
+                            suffix=".pgm", delete=True
+                        ) as tmpfile:
+                            surface_to_pgm(extracted, tmpfile.name)
+                            retval = ocr(tmpfile.name, single_char_reading=True)
+                            retval_chars.append(retval)
 
                 return "".join(retval_chars)
             else:
