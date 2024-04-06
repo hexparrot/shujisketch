@@ -368,7 +368,7 @@ def ocr(filepath, single_char_reading=False):
             output = subprocess.check_output(
                 command, stderr=subprocess.STDOUT, universal_newlines=True
             )
-            return output
+            return output.strip().replace(" ", "")
         except subprocess.CalledProcessError as e:
             print(f"Error executing nhocr: {e.output}")
             return e.output

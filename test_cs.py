@@ -571,7 +571,6 @@ R	10	ヒ	0	0	3.5937597e+00"""
         )
 
     def test_single_char_reading(self):
-        # "｜こ": ["に"],  # nonpermissible failure
         target_char = "に"
         surface = cs.render_string(
             target_char,
@@ -586,6 +585,23 @@ R	10	ヒ	0	0	3.5937597e+00"""
 
         retval = cs.ocr(file_path, single_char_reading=True)
         self.assertEqual(retval, target_char)
+
+    def test_line_cleaning(self):
+        text_str = "こんにちわ"
+        surface = cs.render_string(
+            text_str,
+            font_size=144,
+            tile_width=200,
+            tile_height=200,
+            font_alpha=255,
+        )
+
+        file_path = "sample_surface.pgm"
+        cs.surface_to_pgm(surface, file_path)
+
+        retval = cs.ocr(file_path)
+        # 'こ ん に ちわ' != 'こんにちわ'
+        self.assertEqual(retval, text_str)
 
 
 if __name__ == "__main__":
