@@ -360,3 +360,22 @@ def ocr(filepath):
     except subprocess.CalledProcessError as e:
         print(f"Error executing nhocr: {e.output}")
         return e.output
+
+
+def parse_nhocr_output(output):
+    characters = []
+    # Ensure the output is split into lines correctly
+    for line in output.split("\n"):
+        # Skip empty lines and comment lines
+        if not line or line.startswith("#"):
+            continue
+        parts = line.strip().split("\t")
+        # Ensure the line starts with "R" and contains the expected number of parts
+        if parts[0] == "R" and len(parts) >= 6:
+            _, rank, character, _, _, score = parts
+            characters.append(
+                {"rank": int(rank), "character": character, "score": float(score)}
+            )
+        else:
+            pass  # Skip lines that don't match the expected format
+    return characters

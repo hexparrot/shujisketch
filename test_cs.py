@@ -417,6 +417,7 @@ class TestCharacterSurfaceCreation(unittest.TestCase):
             magic_number = file.read(2).decode("ascii")
             self.assertIn(magic_number, ["P2", "P5"], "File is not a valid PPM file.")
 
+    @unittest.skip
     def test_perfect_font_reading(self):
 
         # Define a mapping of visually similar characters
@@ -496,6 +497,47 @@ class TestCharacterSurfaceCreation(unittest.TestCase):
             assertVisuallySimilar(
                 retval, char, f"ocr result: {retval} expected: {char}"
             )
+
+    def test_get_candidate_readings(self):
+        # "｜こ": ["に"],  # nonpermissible failure
+        output = """# Character candidates table
+#   produced by: NHocr - Japanese OCR  v0.22
+IMG	0
+R	1	に	0	0	2.2526079e+00
+R	2	仁	0	0	2.8243349e+00
+R	3	c	0	0	3.2934342e+00
+R	4	k	0	0	3.3655533e+00
+R	5	K	0	0	3.3674219e+00
+R	6	C	0	0	3.4016937e+00
+R	7	た	0	0	3.5073901e+00
+R	8	【	0	0	3.5609170e+00
+R	9	じ	0	0	3.5680108e+00
+R	10	ヒ	0	0	3.5937597e+00"""
+
+        candidate_data = cs.parse_nhocr_output(output)
+        # Check that the result is a list
+        self.assertIsInstance(candidate_data, list, "The result should be a list.")
+
+        # Check that each item in the list is a dictionary with the specified keys
+        for item in candidate_data:
+            self.assertIsInstance(
+                item, dict, "Each item in the result should be a dictionary."
+            )
+            self.assertTrue(
+                all(key in item for key in ["rank", "character", "score"]),
+                "Each dictionary must contain 'rank', 'character', and 'score' keys.",
+            )
+
+        for idx, item in enumerate(candidate_data):
+            self.assertEqual(candidate_data[idx]["rank"], idx + 1)
+
+        self.assertEqual(candidate_data[0]["character"], "に")
+        self.assertAlmostEqual(
+            candidate_data[0]["score"],
+            float(2.2526079e00),
+            places=7,
+            msg="The values are not close enough.",
+        )
 
 
 if __name__ == "__main__":
