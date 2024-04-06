@@ -349,6 +349,11 @@ def surface_to_pgm(surface, filepath, background_color=(255, 255, 255)):
 
 
 def ocr(filepath):
+    """
+    Reads a PGM file with nhocr returning the best -line reading
+
+    :param filepath: The input filepath for the PGM file.
+    """
     import subprocess
 
     command = ["nhocr", "-line", "-o", "-", filepath]  # load the file next
@@ -363,6 +368,11 @@ def ocr(filepath):
 
 
 def parse_nhocr_output(output):
+    """
+    Reads -mchar output from nhocr, and parses out the rank, character, and score
+
+    :param output: The output from nhocr -mchar
+    """
     characters = []
     # Ensure the output is split into lines correctly
     for line in output.split("\n"):
@@ -388,7 +398,7 @@ def find_best_match(target_char, candidates):
 
     :param target_char: The character to find a match for.
     :param candidates: List of candidate dictionaries.
-    :return: The best match character or None if no exact match is found.
+    return The best match character or None if no approximate/best guess is found.
     """
     exact_matches = [c for c in candidates if c["character"] == target_char]
     if exact_matches:
