@@ -516,7 +516,15 @@ def ocr(
                         ) as tmpfile:
                             surface_to_pgm(extracted, tmpfile.name)
                             retval = ocr(tmpfile.name, single_char_reading=True)
-                            retval_chars.append(retval)
+
+                            # if we know what it is supposed to look like, we need
+                            # to make sure that type 1 false positives are avoided.
+                            # characters not in the known_translation sometimes
+                            # occur as the OCR'ed result of a provided space
+                            if known_translation and retval not in known_translation:
+                                retval_chars.append(" ")
+                            else:
+                                retval_chars.append(retval)
 
                 return "".join(retval_chars)
             else:
