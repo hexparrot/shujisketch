@@ -724,6 +724,97 @@ R	10	ヒ	0	0	3.5937597e+00"""
         retval = cs.ocr(file_path, known_translation=text_str)
         self.assertEqual(retval, text_str)
 
+    def test_spot_check_character_by_index(self):
+        text_str = "ものがたり"
+        surface = cs.render_string(
+            text_str,
+            font_size=72,
+            tile_width=100,
+            tile_height=100,
+            font_alpha=255,
+        )
+
+        self.assertEqual(cs.ocr_by_index(surface, 0), "も")
+        self.assertEqual(cs.ocr_by_index(surface, 1), "の")
+        self.assertEqual(cs.ocr_by_index(surface, 2), "が")
+        self.assertEqual(cs.ocr_by_index(surface, 3), "た")
+        self.assertEqual(cs.ocr_by_index(surface, 4), "り")
+
+        surface = cs.render_string(
+            text_str,
+            font_size=144,
+            tile_width=200,
+            tile_height=200,
+            font_alpha=255,
+        )
+
+        self.assertEqual(cs.ocr_by_index(surface, 0), "も")
+        self.assertEqual(cs.ocr_by_index(surface, 1), "の")
+        self.assertEqual(cs.ocr_by_index(surface, 2), "が")
+        self.assertEqual(cs.ocr_by_index(surface, 3), "た")
+        self.assertEqual(cs.ocr_by_index(surface, 4), "り")
+
+        surface = cs.render_string(
+            text_str,
+            font_size=36,
+            tile_width=50,
+            tile_height=50,
+            font_alpha=255,
+        )
+
+        self.assertEqual(cs.ocr_by_index(surface, 0), "も")
+        self.assertEqual(cs.ocr_by_index(surface, 1), "の")
+        self.assertEqual(cs.ocr_by_index(surface, 2), "が")
+        self.assertEqual(cs.ocr_by_index(surface, 3), "た")
+        self.assertEqual(cs.ocr_by_index(surface, 4), "り")
+
+    def test_spot_check_character_by_index_vertical(self):
+        text_str = "ものがたり"
+        surface = cs.render_string(
+            text_str,
+            font_size=72,
+            tile_width=100,
+            tile_height=100,
+            font_alpha=255,
+            render_vertically=True,
+        )
+
+        self.assertEqual(cs.ocr_by_index(surface, 0), "も")
+        self.assertEqual(cs.ocr_by_index(surface, 1), "の")
+        self.assertEqual(cs.ocr_by_index(surface, 2), "が")
+        self.assertEqual(cs.ocr_by_index(surface, 3), "た")
+        self.assertEqual(cs.ocr_by_index(surface, 4), "り")
+
+        surface = cs.render_string(
+            text_str,
+            font_size=144,
+            tile_width=200,
+            tile_height=200,
+            font_alpha=255,
+            render_vertically=True,
+        )
+
+        self.assertEqual(cs.ocr_by_index(surface, 0), "も")
+        self.assertEqual(cs.ocr_by_index(surface, 1), "の")
+        self.assertEqual(cs.ocr_by_index(surface, 2), "が")
+        self.assertEqual(cs.ocr_by_index(surface, 3), "た")
+        self.assertEqual(cs.ocr_by_index(surface, 4), "り")
+
+        surface = cs.render_string(
+            text_str,
+            font_size=36,
+            tile_width=50,
+            tile_height=50,
+            font_alpha=255,
+            render_vertically=True,
+        )
+
+        self.assertEqual(cs.ocr_by_index(surface, 0), "も")
+        self.assertEqual(cs.ocr_by_index(surface, 1), "の")
+        self.assertEqual(cs.ocr_by_index(surface, 2), "が")
+        self.assertEqual(cs.ocr_by_index(surface, 3), "た")
+        self.assertEqual(cs.ocr_by_index(surface, 4), "り")
+
 
 if __name__ == "__main__":
     unittest.main()

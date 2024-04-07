@@ -351,6 +351,15 @@ def surface_to_pgm(surface, filepath, background_color=(255, 255, 255)):
 def ocr(
     filepath, single_char_reading=False, known_translation=None, render_vertically=False
 ):
+    """
+    Returns a string value with the OCR reading
+
+    :param filepath: The path to the PGM file.
+    :param single_char_reading: The PGM file has only one character
+    :param known_translation: It is known what the string is originally
+    :param render_vertically: The image is written verticallyl
+    :return: string val
+    """
     import subprocess
     import numpy as np
 
@@ -532,6 +541,64 @@ def ocr(
         except subprocess.CalledProcessError as e:
             print(f"Error executing nhocr: {e.output}")
             return e.output
+
+
+def ocr_by_index(surface, index):
+    """
+    Returns a string value with the OCR reading of a single character
+
+    This function assumes a completely square tile, even if there are
+    multiple tiles, horizontally or vertically
+
+    :param filepath: The path to the PGM file.
+    :param single_char_reading: The PGM file has only one character
+    :param known_translation: It is known what the string is originally
+    :param render_vertically: The image is written verticallyl
+    :return: string val
+    """
+    import tempfile
+    import subprocess
+
+    width = surface.get_width()
+    height = surface.get_height()
+
+    expected_tile_width = TILE_WIDTH
+    expected_tile_height = TILE_HEIGHT
+
+    expected_tile_count = 1
+
+    # this logic assumes completely square tiles
+    extracted = None
+    if height > width:  # vertical writing
+        expected_tile_width = width
+        expected_tile_count = int(height / width)
+        expected_tile_height = int(height / expected_tile_count)
+
+        extracted = extract_rectangle(
+            surface,
+            0,
+            index * expected_tile_height,
+            expected_tile_width,
+            expected_tile_height,
+        )
+    else:  # horizontal
+        expected_tile_height = height
+        expected_tile_count = int(width / height)
+        expected_tile_width = int(width / expected_tile_count)
+
+        extracted = extract_rectangle(
+            surface,
+            index * expected_tile_width,
+            0,
+            expected_tile_width,
+            expected_tile_height,
+        )
+
+    with tempfile.NamedTemporaryFile(suffix=".pgm", delete=True) as tmpfile:
+        surface_to_pgm(extracted, tmpfile.name)
+        retval = ocr(tmpfile.name, single_char_reading=True)
+
+        return retval
 
 
 def parse_nhocr_output(output):
