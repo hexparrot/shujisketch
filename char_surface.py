@@ -4,6 +4,7 @@ import cairo
 FONT_SIZE = 72
 FONT_ALPHA = 127
 FONT_PATH = "/usr/share/fonts/google-droid-sans-fonts/DroidSansJapanese.ttf"
+RULES = [20, 80]
 TILE_WIDTH = 100
 TILE_HEIGHT = 100
 
