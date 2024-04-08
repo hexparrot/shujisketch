@@ -231,7 +231,17 @@ class shuji(Gtk.Window):
         # Reset the drawing to its original state
         self.drawing_area.paths = []
         self.drawing_area.current_path = []
+
         next_line = next(self.TEXT)
+        surface = cs.render_string(
+            next_line,
+            font_size=self.FONTSIZE,
+            tile_width=self.TILESIZE,
+            tile_height=self.TILESIZE,
+        )
+
+        surface = cs.apply_horizontal_rule(surface, rules=self.RULES)
+        self.drawing_area.surface = surface
         self.drawing_area.change_text(next_line)
 
 
