@@ -17,6 +17,7 @@ class DrawingArea(Gtk.DrawingArea):
         self.connect("draw", self.on_draw)
         self.text = initial_text
         self.backing_store = None
+        self.surface = None
 
         self.paths = []  # Add this to store paths
         self.current_path = []  # Temporary storage for the current drawing path
@@ -36,6 +37,10 @@ class DrawingArea(Gtk.DrawingArea):
 
         cr.set_source_surface(self.backing_store, 0, 0)
         cr.paint()
+
+        if self.surface:
+            cr.set_source_surface(self.surface, 0, 0)
+            cr.paint()
 
         self.draw_paths(cr)  # Draw the user paths
 
@@ -66,7 +71,7 @@ class DrawingArea(Gtk.DrawingArea):
             or self.backing_store.get_height() != height
         ):
             surface = cs.render_string(
-                APP_TITLE, font_size=144, tile_width=200, tile_height=200
+                self.text, font_size=144, tile_width=200, tile_height=200
             )
             self.backing_store = cs.apply_horizontal_rule(surface, rules=(40, 160))
             cr = cairo.Context(self.backing_store)
@@ -83,20 +88,104 @@ class DrawingArea(Gtk.DrawingArea):
                 cr.stroke()
 
 
-def main():
-    window = Gtk.Window(title=APP_TITLE)
-    window.connect("destroy", Gtk.main_quit)
+class shuji(Gtk.Window):
+    def __init__(self):
+        super().__init__(title=APP_TITLE)
+        self.set_default_size(600, 200)  # Adjust as necessary
 
-    drawing_area = DrawingArea()
+        # Create a VBox to stack the drawing area and the buttons vertically
+        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        self.add(vbox)
 
-    vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-    vbox.pack_start(drawing_area, True, True, 0)
+        # Initialize DrawingArea and pack it into the VBox
+        self.drawing_area = DrawingArea()
+        vbox.pack_start(self.drawing_area, True, True, 0)
 
-    window.add(vbox)
+        # Create a button box for the three buttons
+        button_box = Gtk.Box(spacing=6)
+        vbox.pack_start(button_box, False, True, 0)
 
-    window.show_all()
-    Gtk.main()
+        # Create and add buttons to the button box
+        clear_button = Gtk.Button(label="Clear Writing")
+        clear_button.connect("clicked", self.on_clear_clicked)
+        button_box.pack_start(clear_button, True, True, 0)
+
+        evaluate_button = Gtk.Button(label="Evaluate")
+        evaluate_button.connect("clicked", self.on_evaluate_clicked)
+        button_box.pack_start(evaluate_button, True, True, 0)
+
+        reset_button = Gtk.Button(label="Reset Guide Text")
+        reset_button.connect("clicked", self.on_reset_clicked)
+        button_box.pack_start(reset_button, True, True, 0)
+
+    def save_paths_to_surface(self, paths):
+        # Assume WIDTH and HEIGHT are defined as the dimensions of the drawing area
+        WIDTH, HEIGHT = 600, 200  # Example dimensions, adjust as necessary
+
+        # Create a new surface and draw paths onto it
+        surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, WIDTH, HEIGHT)
+        cr = cairo.Context(surface)
+
+        # Optionally set a white background if your paths are not exclusively black-and-white
+        cr.set_source_rgb(1, 1, 1)  # White background
+        cr.paint()
+
+        # Set drawing color to black for the paths
+        cr.set_source_rgb(0, 0, 0)  # Black
+        cr.set_line_width(4)  # Example line width
+
+        # Draw all paths from self.drawing_area.paths
+        for path in self.drawing_area.paths:
+            if path:
+                cr.move_to(path[0][0], path[0][1])
+                for x, y in path[1:]:
+                    cr.line_to(x, y)
+                cr.stroke()
+
+        return surface
+
+    # Button event handlers
+    def on_clear_clicked(self, button):
+        # Clear the drawing area of user paths
+        self.drawing_area.paths = []
+        self.drawing_area.current_path = []
+
+    def on_evaluate_clicked(self, button):
+        # Evaluate the drawing via ocr
+        chars = []
+        for i in range(len(self.drawing_area.text)):
+            surface = self.save_paths_to_surface(self.drawing_area.paths)
+            retval = cs.ocr_by_index(surface, i)
+            try:
+                if ord(retval) not in [92]:
+                    chars.append(retval)
+            except TypeError:
+                # typeerror found if two chars in string.
+                # should never be the case in ocr_by_index
+                # so throw it away for a space
+                chars.append(" ")
+
+        newval = "".join(chars)
+        surface = cs.render_string(
+            newval, font_size=144, tile_width=200, tile_height=200
+        )
+
+        surface = cs.apply_horizontal_rule(surface, rules=(40, 160))
+        self.drawing_area.surface = surface
+        self.drawing_area.queue_draw()
+
+    def on_reset_clicked(self, button):
+        # Reset the drawing to its original state
+        surface = cs.render_string(
+            self.drawing_area.text, font_size=144, tile_width=200, tile_height=200
+        )
+        surface = cs.apply_horizontal_rule(surface, rules=(40, 160))
+        self.drawing_area.surface = surface
+        self.drawing_area.queue_draw()
 
 
 if __name__ == "__main__":
-    main()
+    app = shuji()
+    app.connect("destroy", Gtk.main_quit)
+    app.show_all()
+    Gtk.main()
