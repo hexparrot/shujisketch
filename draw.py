@@ -42,10 +42,17 @@ class DrawingArea(Gtk.DrawingArea):
         self.change_text("しゅじ")
 
     def change_text(self, text):
+        self.backing_store = None
         self.text = text
         self.set_size_request(len(self.text) * self.TILESIZE, self.TILESIZE)
 
     def on_draw(self, widget, cr):
+        if not self.backing_store:
+            # Set the source to the desired color (RGBA)
+            cr.set_source_rgba(1, 1, 1, 1)  # For white: (1, 1, 1, 1)
+            # Paint the entire surface with the source color
+            cr.paint()
+
         self.ensure_backing_store(widget)
 
         cr.set_source_surface(self.backing_store, 0, 0)
@@ -105,11 +112,15 @@ class DrawingArea(Gtk.DrawingArea):
 
 
 class shuji(Gtk.Window):
-    def __init__(self, fontsize=72, tilesize=100, rules=[20, 80]):
+    def __init__(self, fontsize=72, tilesize=100, rules=[20, 80], fulltext=[]):
         super().__init__(title=APP_TITLE)
         self.FONTSIZE = fontsize
         self.TILESIZE = tilesize
         self.RULES = rules
+
+        from itertools import cycle
+
+        self.TEXT = cycle(fulltext)
 
         # Create a VBox to stack the drawing area and the buttons vertically
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
@@ -137,6 +148,10 @@ class shuji(Gtk.Window):
         reset_button = Gtk.Button(label="Reset Guide Text")
         reset_button.connect("clicked", self.on_reset_clicked)
         button_box.pack_start(reset_button, True, True, 0)
+
+        next_button = Gtk.Button(label="Next Line")
+        next_button.connect("clicked", self.on_next_clicked)
+        button_box.pack_start(next_button, True, True, 0)
 
     def save_paths_to_surface(self, paths):
         # Assume WIDTH and HEIGHT are defined as the dimensions of the drawing area
@@ -212,9 +227,27 @@ class shuji(Gtk.Window):
         self.drawing_area.surface = surface
         self.drawing_area.queue_draw()
 
+    def on_next_clicked(self, button):
+        # Reset the drawing to its original state
+        self.drawing_area.paths = []
+        self.drawing_area.current_path = []
+        next_line = next(self.TEXT)
+        self.drawing_area.change_text(next_line)
+
 
 if __name__ == "__main__":
-    app = shuji(fontsize=144, tilesize=200, rules=(40, 160))
+    line_parts = [
+        "わたしは",  # watashi wa - I
+        "わかりません、",  # wakarimasen - don't know,
+        "わたしが",  # watashi ga - I (subject marker),
+        "わかるのは",  # wakaru no wa - what I know is,
+        "わたしが",  # watashi ga - I (subject marker),
+        "わかること",  # wakaru koto - things that I understand
+        "だけ",  # dake - only
+        "です",  # desu - is (polite).
+    ]
+
+    app = shuji(fontsize=144, tilesize=200, rules=(40, 160), fulltext=line_parts)
     app.connect("destroy", Gtk.main_quit)
     app.show_all()
     Gtk.main()
