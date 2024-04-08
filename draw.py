@@ -15,7 +15,6 @@ class DrawingArea(Gtk.DrawingArea):
         super().__init__()
         self.set_size_request(600, 200)
         self.connect("draw", self.on_draw)
-        self.text = initial_text
         self.backing_store = None
         self.surface = None
 
@@ -31,6 +30,11 @@ class DrawingArea(Gtk.DrawingArea):
         self.connect("button-press-event", self.on_button_press)
         self.connect("motion-notify-event", self.on_motion_notify)
         self.connect("button-release-event", self.on_button_release)
+        self.change_text("しゅじ")
+
+    def change_text(self, text):
+        self.text = text
+        self.set_size_request(len(self.text) * 200, 200)
 
     def on_draw(self, widget, cr):
         self.ensure_backing_store(widget)
