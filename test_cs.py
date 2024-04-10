@@ -693,6 +693,75 @@ R	10	ヒ	0	0	3.5937597e+00"""
         retval = cs.ocr(file_path, known_translation=text_str)
         self.assertEqual(retval, text_str)
 
+    def test_bounding_box_tight_dimensions(self):
+        import tempfile
+
+        def calculate_rectangle_area(rect):
+            """
+            Calculate the area of a rectangle given its coordinates.
+
+            :param rect: A tuple of (left, top, right, bottom) coordinates.
+            :return: The area of the rectangle.
+            """
+            # Unpack the coordinates
+            left, top, right, bottom = rect
+
+            # Calculate width and height
+            width = right - left
+            height = bottom - top
+
+            # Calculate and return area
+            return width * height
+
+        char_pair = [
+            ("ぁ", "あ"),
+            ("ぅ", "う"),
+            ("ぇ", "え"),
+            ("ぉ", "お"),
+            ("っ", "つ"),
+            ("ゃ", "や"),
+            ("ゅ", "ゆ"),
+            ("ょ", "よ"),
+            ("ゎ", "わ"),
+        ]
+
+        for a, b in char_pair:
+            surface_sm = cs.render_string(
+                a,
+                font_size=144,
+                tile_width=200,
+                tile_height=200,
+                font_alpha=255,
+            )
+
+            surface_nm = cs.render_string(
+                b,
+                font_size=144,
+                tile_width=200,
+                tile_height=200,
+                font_alpha=255,
+            )
+
+        with tempfile.NamedTemporaryFile(delete=True, suffix=".pgm") as temp_file_sm:
+            # Use the temporary file's name
+            cs.surface_to_pgm(surface_sm, temp_file_sm.name)
+
+            # Create another temporary file
+            with tempfile.NamedTemporaryFile(
+                delete=True, suffix=".pgm"
+            ) as temp_file_nm:
+                # Use the second temporary file's name
+                cs.surface_to_pgm(surface_nm, temp_file_nm.name)
+
+                # Since we are within the context, the file exists and we can read from it
+                val1 = cs.find_tight_bounding_box(temp_file_sm.name)
+                val2 = cs.find_tight_bounding_box(temp_file_nm.name)
+
+                # small will always be less than the large! always!
+                self.assertLess(
+                    calculate_rectangle_area(val1), calculate_rectangle_area(val2)
+                )
+
 
 if __name__ == "__main__":
     unittest.main()

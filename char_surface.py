@@ -556,3 +556,34 @@ def parse_nhocr_output(output):
         else:
             pass  # Skip lines that don't match the expected format
     return characters
+
+
+def find_tight_bounding_box(image_path):
+    """
+    Finds the x and y dimensions where the first non-white pixel exists going
+    from each direction inward.
+
+    :param output: (leftmost x, topmost y, rightmost x, bottommost y)
+    """
+    import numpy as np
+    from PIL import Image
+
+    with Image.open(image_path) as img:
+        # Convert the image to grayscale and then to a NumPy array
+        img_array = np.array(img.convert("L"))
+
+        # Find all non-white (assuming white is 255) pixel positions
+        non_white_pixels = np.where(img_array != 255)
+
+        # Extract rows and columns of non-white pixels
+        rows, cols = non_white_pixels
+
+        # Check if any content was found
+        if rows.size == 0 or cols.size == 0:
+            return None  # No content found
+
+        # Determine the bounding box edges
+        top, bottom = np.min(rows), np.max(rows)
+        left, right = np.min(cols), np.max(cols)
+
+        return (left, top, right, bottom)
