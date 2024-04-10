@@ -768,6 +768,53 @@ R	10	ヒ	0	0	3.5937597e+00"""
                     cs.find_rectangle_proportion(bbox2),
                 )
 
+    def test_guess_character_size(self):
+        def get_bbox(char):
+            import tempfile
+
+            with tempfile.NamedTemporaryFile(
+                delete=True, suffix=".pgm"
+            ) as temp_file_sm:
+                # Use the temporary file's name
+                surface_sm = cs.render_string(
+                    char,
+                    font_size=144,
+                    tile_width=200,
+                    tile_height=200,
+                    font_alpha=255,
+                )
+                cs.surface_to_pgm(surface_sm, temp_file_sm.name)
+                return cs.find_tight_bounding_box(temp_file_sm.name)
+
+        # List of small to large character pairs
+        char_pairs = [
+            ("ぁ", "あ"),
+            ("ぅ", "う"),
+            ("ぇ", "え"),
+            ("ぉ", "お"),
+            ("っ", "つ"),
+            ("ゃ", "や"),
+            ("ゅ", "ゆ"),
+            ("ょ", "よ"),
+            ("ゎ", "わ"),
+        ]
+
+        # Iterate through each pair and test classification
+        for small_char, large_char in char_pairs:
+            with self.subTest(char=small_char):
+                self.assertEqual(
+                    cs.guess_character_size(get_bbox(small_char), 200, 200),
+                    "small",
+                    f"{small_char} should be classified as 'small'",
+                )
+
+            with self.subTest(char=large_char):
+                self.assertEqual(
+                    cs.guess_character_size(get_bbox(large_char), 200, 200),
+                    "large",
+                    f"{large_char} should be classified as 'large'",
+                )
+
 
 if __name__ == "__main__":
     unittest.main()
