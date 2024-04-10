@@ -615,46 +615,18 @@ def find_rectangle_proportion(
     return proportion
 
 
-def guess_character_size(rectangle, tile_width=TILE_WIDTH, tile_height=TILE_HEIGHT):
+def guess_character_size(rectangle, threshold=59):
     """
-    Classifies characters using three checks: midpoint threshold, standard deviation threshold,
-    and 'top' proportion threshold. Final classification is based on the majority.
+    Classifies characters as 'small' or 'large' based on a simple threshold for the 'top' row value.
 
-    :param rectangle: Rectangle coordinates (left, top, right, bottom).
-    :return: 'small' or 'large' based on majority classification.
+    :param rectangle: Tuple representing the rectangle (left, top, right, bottom).
+    :param threshold: The threshold value for the 'top' row. Characters with a 'top' row value at this threshold or less are classified as 'large', otherwise 'small'.
+    :return: 'small' or 'large'
     """
-    # Existing thresholds and mean proportions
-    mean_proportion_small = 0.2115
-    mean_proportion_large = 0.3346
-    std_dev_proportion_large = 0.0474
-    mean_top_proportion_small = 0.3256
-    mean_top_proportion_large = 0.2011
+    _, top, _, _ = rectangle
 
-    # Calculate midpoint and standard deviation thresholds
-    midpoint_threshold = (mean_proportion_small + mean_proportion_large) / 2
-    threshold_std_dev = mean_proportion_large - std_dev_proportion_large
-
-    # Calculate 'top' line proportion threshold (using the 'top' mean proportions)
-    top_threshold = (mean_top_proportion_small + mean_top_proportion_large) / 2
-
-    # Calculate proportions
-    proportion = find_rectangle_proportion(rectangle, tile_width, tile_height)
-    top_proportion = rectangle[1] / tile_height
-
-    # Initial classifications
-    classifications = [
-        "small" if proportion < midpoint_threshold else "large",
-        "small" if proportion <= threshold_std_dev else "large",
-        (
-            "large" if top_proportion < top_threshold else "small"
-        ),  # Note the inversion due to 'top' line logic
-        (
-            "large" if top_proportion < top_threshold else "small"
-        ),  # duplication actually solves 'う' (better weight)
-        "large" if top_proportion < top_threshold else "small",  # duplicated
-    ]
-
-    # Determine final classification based on majority
-    final_classification = max(set(classifications), key=classifications.count)
-
-    return final_classification
+    # If the 'top' value is at the threshold or less, it's considered 'large'
+    if top <= threshold:
+        return "large"
+    else:
+        return "small"

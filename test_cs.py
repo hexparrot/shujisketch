@@ -803,14 +803,14 @@ R	10	ヒ	0	0	3.5937597e+00"""
         for small_char, large_char in char_pairs:
             with self.subTest(char=small_char):
                 self.assertEqual(
-                    cs.guess_character_size(get_bbox(small_char), 200, 200),
+                    cs.guess_character_size(get_bbox(small_char)),
                     "small",
                     f"{small_char} should be classified as 'small'",
                 )
 
             with self.subTest(char=large_char):
                 self.assertEqual(
-                    cs.guess_character_size(get_bbox(large_char), 200, 200),
+                    cs.guess_character_size(get_bbox(large_char)),
                     "large",
                     f"{large_char} should be classified as 'large'",
                 )
