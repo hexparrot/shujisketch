@@ -754,12 +754,18 @@ R	10	ヒ	0	0	3.5937597e+00"""
                 cs.surface_to_pgm(surface_nm, temp_file_nm.name)
 
                 # Since we are within the context, the file exists and we can read from it
-                val1 = cs.find_tight_bounding_box(temp_file_sm.name)
-                val2 = cs.find_tight_bounding_box(temp_file_nm.name)
+                bbox1 = cs.find_tight_bounding_box(temp_file_sm.name)
+                bbox2 = cs.find_tight_bounding_box(temp_file_nm.name)
 
-                # small will always be less than the large! always!
+                # small will always be less than the large! always! this is area
                 self.assertLess(
-                    calculate_rectangle_area(val1), calculate_rectangle_area(val2)
+                    calculate_rectangle_area(bbox1), calculate_rectangle_area(bbox2)
+                )
+
+                # small will always be less than the large! always! here is proportion
+                self.assertLess(
+                    cs.find_rectangle_proportion(bbox1),
+                    cs.find_rectangle_proportion(bbox2),
                 )
 
 

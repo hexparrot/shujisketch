@@ -587,3 +587,29 @@ def find_tight_bounding_box(image_path):
         left, right = np.min(cols), np.max(cols)
 
         return (left, top, right, bottom)
+
+
+def find_rectangle_proportion(
+    rectangle, tile_width=TILE_WIDTH, tile_height=TILE_HEIGHT
+):
+    """
+    Calculate the proportion of the tile area occupied by the rectangle.
+
+    :param rectangle: A tuple of (left, top, right, bottom) coordinates for the rectangle.
+    :param tile_width: The width of the tile.
+    :param tile_height: The height of the tile.
+    :return: The proportion of the tile area occupied by the rectangle.
+    """
+    # Unpack the rectangle coordinates
+    left, top, right, bottom = rectangle
+
+    # Calculate the area of the rectangle
+    rectangle_area = (right - left) * (bottom - top)
+
+    # Calculate the total area of the tile
+    tile_area = tile_width * tile_height
+
+    # Calculate the proportion of the tile area occupied by the rectangle
+    proportion = rectangle_area / tile_area
+
+    return proportion
