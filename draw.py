@@ -66,7 +66,8 @@ class DrawingArea(Gtk.DrawingArea):
 
     def on_button_press(self, widget, event):
         # Start a new path
-        self.current_path = [(event.x, event.y)]
+        if event.button == 1:  # stylus touchdown
+            self.current_path = [(event.x, event.y)]
 
     def on_motion_notify(self, widget, event):
         # Add point to current path if drawing
@@ -75,10 +76,11 @@ class DrawingArea(Gtk.DrawingArea):
 
     def on_button_release(self, widget, event):
         # Finish the current path
-        if self.current_path:
-            self.paths.append(self.current_path)
-            self.current_path = []
-            self.queue_draw()
+        if event.button == 1:  # stylus liftoff
+            if self.current_path:
+                self.paths.append(self.current_path)
+                self.current_path = []
+                self.queue_draw()
 
     def ensure_backing_store(self, widget):
         alloc = widget.get_allocation()
