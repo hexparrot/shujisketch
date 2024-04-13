@@ -14,6 +14,7 @@ class DrawingArea(Gtk.DrawingArea):
     def __init__(
         self,
         initial_text=APP_TITLE,
+        render_vertically=False,
         fontsize=cs.FONT_SIZE,
         tilesize=cs.TILE_WIDTH,
         rules=cs.RULES,
@@ -22,6 +23,7 @@ class DrawingArea(Gtk.DrawingArea):
         self.TILESIZE = tilesize
         self.FONTSIZE = fontsize
         self.RULES = rules
+        self.RENDER_VERTICALLY = render_vertically
 
         self.connect("draw", self.on_draw)
         self.backing_store = None
@@ -44,7 +46,10 @@ class DrawingArea(Gtk.DrawingArea):
     def change_text(self, text):
         self.backing_store = None
         self.text = text
-        self.set_size_request(len(self.text) * self.TILESIZE, self.TILESIZE)
+        if self.RENDER_VERTICALLY:
+            self.set_size_request(self.TILESIZE, len(self.text) * self.TILESIZE)
+        else:
+            self.set_size_request(len(self.text) * self.TILESIZE, self.TILESIZE)
 
     def on_draw(self, widget, cr):
         if not self.backing_store:
@@ -94,11 +99,24 @@ class DrawingArea(Gtk.DrawingArea):
         ):
             surface = cs.render_string(
                 self.text,
+                render_vertically=self.RENDER_VERTICALLY,
                 font_size=self.FONTSIZE,
                 tile_width=self.TILESIZE,
                 tile_height=self.TILESIZE,
             )
-            self.backing_store = cs.apply_horizontal_rule(surface, rules=self.RULES)
+
+            if self.RENDER_VERTICALLY:
+                for i in range(len(self.text)):
+                    self.backing_store = cs.apply_horizontal_rule(
+                        surface,
+                        y_offset=i * self.TILESIZE,
+                        rules=self.RULES,
+                    )
+            else:
+                self.backing_store = cs.apply_horizontal_rule(
+                    surface,
+                    rules=self.RULES,
+                )
             cr = cairo.Context(self.backing_store)
 
     def draw_paths(self, cr):
@@ -114,7 +132,14 @@ class DrawingArea(Gtk.DrawingArea):
 
 
 class shuji(Gtk.Window):
-    def __init__(self, fontsize=72, tilesize=100, rules=[20, 80], fulltext=[]):
+    def __init__(
+        self,
+        fontsize=72,
+        render_vertically=False,
+        tilesize=100,
+        rules=[20, 80],
+        fulltext=[],
+    ):
         super().__init__(title=APP_TITLE)
         self.FONTSIZE = fontsize
         self.TILESIZE = tilesize
@@ -122,7 +147,8 @@ class shuji(Gtk.Window):
 
         from itertools import cycle
 
-        self.TEXT = cycle(fulltext)
+        self.REPEATED_TEXT = cycle(fulltext)
+        self.TEXT = next(self.REPEATED_TEXT)
 
         # Create a VBox to stack the drawing area and the buttons vertically
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
@@ -130,7 +156,10 @@ class shuji(Gtk.Window):
 
         # Initialize DrawingArea and pack it into the VBox
         self.drawing_area = DrawingArea(
-            fontsize=self.FONTSIZE, tilesize=self.TILESIZE, rules=self.RULES
+            fontsize=self.FONTSIZE,
+            render_vertically=render_vertically,
+            tilesize=self.TILESIZE,
+            rules=self.RULES,
         )
         vbox.pack_start(self.drawing_area, True, True, 0)
 
@@ -157,10 +186,16 @@ class shuji(Gtk.Window):
 
     def save_paths_to_surface(self, paths):
         # Assume WIDTH and HEIGHT are defined as the dimensions of the drawing area
-        WIDTH, HEIGHT = (
-            len(self.drawing_area.text) * self.TILESIZE,
-            self.TILESIZE,
-        )  # Example dimensions, adjust as necessary
+        if self.drawing_area.RENDER_VERTICALLY:
+            WIDTH, HEIGHT = (
+                self.TILESIZE,
+                len(self.TEXT) * self.TILESIZE,
+            )
+        else:
+            WIDTH, HEIGHT = (
+                len(self.TEXT) * self.TILESIZE,
+                self.TILESIZE,
+            )
 
         # Create a new surface and draw paths onto it
         surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, WIDTH, HEIGHT)
@@ -195,7 +230,7 @@ class shuji(Gtk.Window):
         width, height = self.TILESIZE, self.TILESIZE
 
         chars = []
-        for i in range(len(self.drawing_area.text)):
+        for i in range(len(self.TEXT)):
             surface = self.save_paths_to_surface(self.drawing_area.paths)
             retval = cs.ocr_by_index(surface, i)
             try:
@@ -216,29 +251,58 @@ class shuji(Gtk.Window):
                 tile_width=width,
                 tile_height=height,
             )
-            if c == self.drawing_area.text[i]:
+            if c == self.TEXT[i]:
                 tiles.append(cs.paint_grayscale_to_green(tile))
             else:
                 tiles.append(tile)
 
-        new_surface = cs.create_blank(cairo.FORMAT_ARGB32, width * len(tiles), height)
+        if self.drawing_area.RENDER_VERTICALLY:
+            new_surface = cs.create_blank(
+                cairo.FORMAT_ARGB32, width, height * len(tiles)
+            )
+        else:
+            new_surface = cs.create_blank(
+                cairo.FORMAT_ARGB32, width * len(tiles), height
+            )
 
         for i, tile in enumerate(tiles):
-            new_surface = cs.stack_surfaces(new_surface, tile, x_offset=width * i)
+            if self.drawing_area.RENDER_VERTICALLY:
+                new_surface = cs.stack_surfaces(new_surface, tile, y_offset=height * i)
+            else:
+                new_surface = cs.stack_surfaces(new_surface, tile, x_offset=width * i)
 
-        new_surface = cs.apply_horizontal_rule(new_surface, rules=self.RULES)
+        if self.drawing_area.RENDER_VERTICALLY:
+            for i in range(len(self.TEXT)):
+                new_surface = cs.apply_horizontal_rule(
+                    new_surface,
+                    y_offset=(i * self.TILESIZE),
+                    rules=self.RULES,
+                )
+        else:
+            new_surface = cs.apply_horizontal_rule(
+                new_surface,
+                rules=self.RULES,
+            )
         self.drawing_area.surface = new_surface
         self.drawing_area.queue_draw()
 
     def on_reset_clicked(self, button):
         # Reset the drawing to its original state
         surface = cs.render_string(
-            self.drawing_area.text,
+            self.TEXT,
+            render_vertically=self.drawing_area.RENDER_VERTICALLY,
             font_size=self.FONTSIZE,
             tile_width=self.TILESIZE,
             tile_height=self.TILESIZE,
         )
-        surface = cs.apply_horizontal_rule(surface, rules=self.RULES)
+        for i in range(len(self.TEXT)):
+            surface = cs.apply_horizontal_rule(
+                surface,
+                y_offset=(
+                    i * self.TILESIZE if self.drawing_area.RENDER_VERTICALLY else 0
+                ),
+                rules=self.RULES,
+            )
         self.drawing_area.surface = surface
         self.drawing_area.queue_draw()
 
@@ -247,17 +311,29 @@ class shuji(Gtk.Window):
         self.drawing_area.paths = []
         self.drawing_area.current_path = []
 
-        next_line = next(self.TEXT)
+        self.TEXT = next(self.REPEATED_TEXT)
         surface = cs.render_string(
-            next_line,
+            self.TEXT,
+            render_vertically=self.drawing_area.RENDER_VERTICALLY,
             font_size=self.FONTSIZE,
             tile_width=self.TILESIZE,
             tile_height=self.TILESIZE,
         )
 
-        surface = cs.apply_horizontal_rule(surface, rules=self.RULES)
+        if self.drawing_area.RENDER_VERTICALLY:
+            for i in range(len(self.TEXT)):
+                surface = cs.apply_horizontal_rule(
+                    surface,
+                    y_offset=(i * self.TILESIZE),
+                    rules=self.RULES,
+                )
+        else:
+            surface = cs.apply_horizontal_rule(
+                surface,
+                rules=self.RULES,
+            )
         self.drawing_area.surface = surface
-        self.drawing_area.change_text(next_line)
+        self.drawing_area.change_text(self.TEXT)
 
 
 if __name__ == "__main__":
@@ -272,7 +348,13 @@ if __name__ == "__main__":
         "です",  # desu - is (polite).
     ]
 
-    app = shuji(fontsize=144, tilesize=200, rules=(40, 160), fulltext=line_parts)
+    app = shuji(
+        fontsize=144,
+        render_vertically=False,
+        tilesize=200,
+        rules=(40, 160),
+        fulltext=line_parts,
+    )
     app.connect("destroy", Gtk.main_quit)
     app.show_all()
     Gtk.main()
