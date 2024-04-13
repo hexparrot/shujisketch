@@ -190,6 +190,8 @@ class shuji(Gtk.Window):
 
     def on_evaluate_clicked(self, button):
         # Evaluate the drawing via ocr
+        width, height = self.TILESIZE, self.TILESIZE
+
         chars = []
         for i in range(len(self.drawing_area.text)):
             surface = self.save_paths_to_surface(self.drawing_area.paths)
@@ -203,16 +205,27 @@ class shuji(Gtk.Window):
                 # so throw it away for a space
                 chars.append(" ")
 
-        newval = "".join(chars)
-        surface = cs.render_string(
-            newval,
-            font_size=self.FONTSIZE,
-            tile_width=self.TILESIZE,
-            tile_height=self.TILESIZE,
-        )
+        # get an imagesurface for all characters
+        tiles = []
+        for i, c in enumerate(chars):
+            tile = cs.draw_character(
+                c,
+                font_size=self.FONTSIZE,
+                tile_width=width,
+                tile_height=height,
+            )
+            if c == self.drawing_area.text[i]:
+                tiles.append(cs.paint_grayscale_to_green(tile))
+            else:
+                tiles.append(tile)
 
-        surface = cs.apply_horizontal_rule(surface, rules=self.RULES)
-        self.drawing_area.surface = surface
+        new_surface = cs.create_blank(cairo.FORMAT_ARGB32, width * len(tiles), height)
+
+        for i, tile in enumerate(tiles):
+            new_surface = cs.stack_surfaces(new_surface, tile, x_offset=width * i)
+
+        new_surface = cs.apply_horizontal_rule(new_surface, rules=self.RULES)
+        self.drawing_area.surface = new_surface
         self.drawing_area.queue_draw()
 
     def on_reset_clicked(self, button):

@@ -906,6 +906,39 @@ R	10	ヒ	0	0	3.5937597e+00"""
                     f"{large_char} should be classified as 'large'",
                 )
 
+    def test_convert_black_text_to_green(self):
+        import numpy as np
+
+        surface = cs.draw_character(
+            "よ",
+            font_size=72,
+            tile_width=100,
+            tile_height=100,
+        )
+        transformed_surface = cs.paint_grayscale_to_green(surface)
+
+        # Check pixel colors
+        width, height = (
+            transformed_surface.get_width(),
+            transformed_surface.get_height(),
+        )
+        data = np.ndarray(
+            shape=(height, width, 4),
+            dtype=np.uint8,
+            buffer=transformed_surface.get_data(),
+        )
+
+        # Assert that we have green pixels where there was text
+        for y in range(height):
+            for x in range(width):
+                r, g, b, a = data[y, x]
+                if a > 0:  # Where there was text, expecting green
+                    self.assertGreater(g, 0)
+                    self.assertEqual(r, 0)
+                    self.assertEqual(b, 0)
+                else:  # Where there was no text, expecting full transparency
+                    self.assertEqual(a, 0)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -698,3 +698,20 @@ def guess_character_size(rectangle, threshold=59):
         return "large"
     else:
         return "small"
+
+
+def paint_grayscale_to_green(source_surface):
+    width, height = source_surface.get_width(), source_surface.get_height()
+    new_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
+    ctx = cairo.Context(new_surface)
+
+    # Apply green directly based on non-zero alpha areas
+    ctx.set_operator(cairo.OPERATOR_SOURCE)
+    ctx.set_source_surface(source_surface, 0, 0)
+    ctx.paint_with_alpha(0)  # Paint nothing initially
+
+    ctx.set_operator(cairo.OPERATOR_OVER)
+    ctx.set_source_rgba(0, 1, 0, 1)  # Full green
+    ctx.mask_surface(source_surface, 0, 0)  # Mask by the original's alpha
+
+    return new_surface
