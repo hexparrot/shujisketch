@@ -626,23 +626,75 @@ def parse_nhocr_output(output):
     return characters
 
 
-def find_best_match(target_char, candidates):
+def find_tight_bounding_box(image_path):
     """
-    Finds the best match for the target character from a list of candidates.
-    Each candidate is a dictionary with 'rank', 'character', and 'score' keys.
+    Finds the x and y dimensions where the first non-white pixel exists going
+    from each direction inward.
 
-    :param target_char: The character to find a match for.
-    :param candidates: List of candidate dictionaries.
-    return The best match character or None if no approximate/best guess is found.
+    :param output: (leftmost x, topmost y, rightmost x, bottommost y)
     """
-    exact_matches = [c for c in candidates if c["character"] == target_char]
-    if exact_matches:
-        # If there are exact matches, return the one with the lowest rank
-        return sorted(exact_matches, key=lambda x: x["rank"])[0]["character"]
+    import numpy as np
+    from PIL import Image
 
-    # If no exact match, return the candidate with the lowest rank
-    return (
-        sorted(candidates, key=lambda x: x["rank"])[0]["character"]
-        if candidates
-        else None
-    )
+    with Image.open(image_path) as img:
+        # Convert the image to grayscale and then to a NumPy array
+        img_array = np.array(img.convert("L"))
+
+        # Find all non-white (assuming white is 255) pixel positions
+        non_white_pixels = np.where(img_array != 255)
+
+        # Extract rows and columns of non-white pixels
+        rows, cols = non_white_pixels
+
+        # Check if any content was found
+        if rows.size == 0 or cols.size == 0:
+            return None  # No content found
+
+        # Determine the bounding box edges
+        top, bottom = np.min(rows), np.max(rows)
+        left, right = np.min(cols), np.max(cols)
+
+        return (left, top, right, bottom)
+
+
+def find_rectangle_proportion(
+    rectangle, tile_width=TILE_WIDTH, tile_height=TILE_HEIGHT
+):
+    """
+    Calculate the proportion of the tile area occupied by the rectangle.
+
+    :param rectangle: A tuple of (left, top, right, bottom) coordinates for the rectangle.
+    :param tile_width: The width of the tile.
+    :param tile_height: The height of the tile.
+    :return: The proportion of the tile area occupied by the rectangle.
+    """
+    # Unpack the rectangle coordinates
+    left, top, right, bottom = rectangle
+
+    # Calculate the area of the rectangle
+    rectangle_area = (right - left) * (bottom - top)
+
+    # Calculate the total area of the tile
+    tile_area = tile_width * tile_height
+
+    # Calculate the proportion of the tile area occupied by the rectangle
+    proportion = rectangle_area / tile_area
+
+    return proportion
+
+
+def guess_character_size(rectangle, threshold=59):
+    """
+    Classifies characters as 'small' or 'large' based on a simple threshold for the 'top' row value.
+
+    :param rectangle: Tuple representing the rectangle (left, top, right, bottom).
+    :param threshold: The threshold value for the 'top' row. Characters with a 'top' row value at this threshold or less are classified as 'large', otherwise 'small'.
+    :return: 'small' or 'large'
+    """
+    _, top, _, _ = rectangle
+
+    # If the 'top' value is at the threshold or less, it's considered 'large'
+    if top <= threshold:
+        return "large"
+    else:
+        return "small"

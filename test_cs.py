@@ -539,37 +539,6 @@ R	10	ヒ	0	0	3.5937597e+00"""
             msg="The values are not close enough.",
         )
 
-    def test_find_best_match(self):
-        target_char = "に"
-        candidates = [
-            {"rank": 1, "character": "に", "score": 2.2526079},
-            {"rank": 2, "character": "仁", "score": 2.8243349},
-            {"rank": 3, "character": "c", "score": 3.2934342},
-        ]
-
-        # Test for an exact match
-        self.assertEqual(
-            cs.find_best_match(target_char, candidates),
-            "に",
-            "Failed to find the exact match.",
-        )
-
-        # Test for the best guess match when no exact match is available
-        # keep in mind, あ will never actually yield に, this is a possibility only
-        # because the candidates are hardcoded from above, and this is testing
-        # that the top character is always returned, just cause
-        target_char_no_exact_match = "あ"
-        self.assertEqual(
-            cs.find_best_match(target_char_no_exact_match, candidates),
-            candidates[0]["character"],
-            "Failed to return the best guess match.",
-        )
-
-        # Test with no candidates
-        self.assertIsNone(
-            cs.find_best_match("あ", []), "Expected None for no candidates available."
-        )
-
     def test_single_char_reading(self):
         target_char = "に"
         surface = cs.render_string(
@@ -814,6 +783,128 @@ R	10	ヒ	0	0	3.5937597e+00"""
         self.assertEqual(cs.ocr_by_index(surface, 2), "が")
         self.assertEqual(cs.ocr_by_index(surface, 3), "た")
         self.assertEqual(cs.ocr_by_index(surface, 4), "り")
+
+    def test_bounding_box_tight_dimensions(self):
+        import tempfile
+
+        def calculate_rectangle_area(rect):
+            """
+            Calculate the area of a rectangle given its coordinates.
+
+            :param rect: A tuple of (left, top, right, bottom) coordinates.
+            :return: The area of the rectangle.
+            """
+            # Unpack the coordinates
+            left, top, right, bottom = rect
+
+            # Calculate width and height
+            width = right - left
+            height = bottom - top
+
+            # Calculate and return area
+            return width * height
+
+        char_pair = [
+            ("ぁ", "あ"),
+            ("ぅ", "う"),
+            ("ぇ", "え"),
+            ("ぉ", "お"),
+            ("っ", "つ"),
+            ("ゃ", "や"),
+            ("ゅ", "ゆ"),
+            ("ょ", "よ"),
+            ("ゎ", "わ"),
+        ]
+
+        for a, b in char_pair:
+            surface_sm = cs.render_string(
+                a,
+                font_size=144,
+                tile_width=200,
+                tile_height=200,
+                font_alpha=255,
+            )
+
+            surface_nm = cs.render_string(
+                b,
+                font_size=144,
+                tile_width=200,
+                tile_height=200,
+                font_alpha=255,
+            )
+
+        with tempfile.NamedTemporaryFile(delete=True, suffix=".pgm") as temp_file_sm:
+            # Use the temporary file's name
+            cs.surface_to_pgm(surface_sm, temp_file_sm.name)
+
+            # Create another temporary file
+            with tempfile.NamedTemporaryFile(
+                delete=True, suffix=".pgm"
+            ) as temp_file_nm:
+                # Use the second temporary file's name
+                cs.surface_to_pgm(surface_nm, temp_file_nm.name)
+
+                # Since we are within the context, the file exists and we can read from it
+                bbox1 = cs.find_tight_bounding_box(temp_file_sm.name)
+                bbox2 = cs.find_tight_bounding_box(temp_file_nm.name)
+
+                # small will always be less than the large! always! this is area
+                self.assertLess(
+                    calculate_rectangle_area(bbox1), calculate_rectangle_area(bbox2)
+                )
+
+                # small will always be less than the large! always! here is proportion
+                self.assertLess(
+                    cs.find_rectangle_proportion(bbox1),
+                    cs.find_rectangle_proportion(bbox2),
+                )
+
+    def test_guess_character_size(self):
+        def get_bbox(char):
+            import tempfile
+
+            with tempfile.NamedTemporaryFile(
+                delete=True, suffix=".pgm"
+            ) as temp_file_sm:
+                # Use the temporary file's name
+                surface_sm = cs.render_string(
+                    char,
+                    font_size=144,
+                    tile_width=200,
+                    tile_height=200,
+                    font_alpha=255,
+                )
+                cs.surface_to_pgm(surface_sm, temp_file_sm.name)
+                return cs.find_tight_bounding_box(temp_file_sm.name)
+
+        # List of small to large character pairs
+        char_pairs = [
+            ("ぁ", "あ"),
+            ("ぅ", "う"),
+            ("ぇ", "え"),
+            ("ぉ", "お"),
+            ("っ", "つ"),
+            ("ゃ", "や"),
+            ("ゅ", "ゆ"),
+            ("ょ", "よ"),
+            ("ゎ", "わ"),
+        ]
+
+        # Iterate through each pair and test classification
+        for small_char, large_char in char_pairs:
+            with self.subTest(char=small_char):
+                self.assertEqual(
+                    cs.guess_character_size(get_bbox(small_char)),
+                    "small",
+                    f"{small_char} should be classified as 'small'",
+                )
+
+            with self.subTest(char=large_char):
+                self.assertEqual(
+                    cs.guess_character_size(get_bbox(large_char)),
+                    "large",
+                    f"{large_char} should be classified as 'large'",
+                )
 
 
 if __name__ == "__main__":
