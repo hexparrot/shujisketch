@@ -154,20 +154,15 @@ class shuji(Gtk.Window):
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         self.add(vbox)
 
-        # Initialize DrawingArea and pack it into the VBox
-        self.drawing_area = DrawingArea(
-            fontsize=self.FONTSIZE,
-            render_vertically=render_vertically,
-            tilesize=self.TILESIZE,
-            rules=self.RULES,
-        )
-        vbox.pack_start(self.drawing_area, True, True, 0)
-
         # Create a button box for the three buttons
         button_box = Gtk.Box(spacing=6)
         vbox.pack_start(button_box, False, True, 0)
 
         # Create and add buttons to the button box
+        reset_button = Gtk.Button(label="Reset Guide Text")
+        reset_button.connect("clicked", self.on_reset_clicked)
+        button_box.pack_start(reset_button, True, True, 0)
+
         clear_button = Gtk.Button(label="Clear Writing")
         clear_button.connect("clicked", self.on_clear_clicked)
         button_box.pack_start(clear_button, True, True, 0)
@@ -176,13 +171,18 @@ class shuji(Gtk.Window):
         evaluate_button.connect("clicked", self.on_evaluate_clicked)
         button_box.pack_start(evaluate_button, True, True, 0)
 
-        reset_button = Gtk.Button(label="Reset Guide Text")
-        reset_button.connect("clicked", self.on_reset_clicked)
-        button_box.pack_start(reset_button, True, True, 0)
-
         next_button = Gtk.Button(label="Next Line")
         next_button.connect("clicked", self.on_next_clicked)
         button_box.pack_start(next_button, True, True, 0)
+
+        # Initialize DrawingArea and pack it into the VBox
+        self.drawing_area = DrawingArea(
+            fontsize=self.FONTSIZE,
+            render_vertically=render_vertically,
+            tilesize=self.TILESIZE,
+            rules=self.RULES,
+        )
+        vbox.pack_start(self.drawing_area, True, True, 0)
 
     def save_paths_to_surface(self, paths):
         # Assume WIDTH and HEIGHT are defined as the dimensions of the drawing area
