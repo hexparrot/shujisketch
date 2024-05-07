@@ -3,6 +3,12 @@ import cairo
 import char_surface as cs
 
 
+def is_nhocr_available():
+    import shutil
+
+    return shutil.which("nhocr") is not None
+
+
 class TestCharacterSurfaceCreation(unittest.TestCase):
     def setUp(self):
         pass
@@ -498,6 +504,7 @@ class TestCharacterSurfaceCreation(unittest.TestCase):
                 retval, char, f"ocr result: {retval} expected: {char}"
             )
 
+    @unittest.skipIf(not is_nhocr_available(), "nhocr not found in path, skipping test")
     def test_get_candidate_readings(self):
         # "｜こ": ["に"],  # nonpermissible failure
         output = """# Character candidates table
@@ -539,6 +546,7 @@ R	10	ヒ	0	0	3.5937597e+00"""
             msg="The values are not close enough.",
         )
 
+    @unittest.skipIf(not is_nhocr_available(), "nhocr not found in path, skipping test")
     def test_single_char_reading(self):
         target_char = "に"
         surface = cs.render_string(
@@ -555,6 +563,7 @@ R	10	ヒ	0	0	3.5937597e+00"""
         retval = cs.ocr(file_path, single_char_reading=True)
         self.assertEqual(retval, target_char)
 
+    @unittest.skipIf(not is_nhocr_available(), "nhocr not found in path, skipping test")
     def test_line_cleaning(self):
         text_str = "こんにちわ"
         surface = cs.render_string(
@@ -572,6 +581,7 @@ R	10	ヒ	0	0	3.5937597e+00"""
         # 'こ ん に ちわ' != 'こんにちわ'
         self.assertEqual(retval, text_str)
 
+    @unittest.skipIf(not is_nhocr_available(), "nhocr not found in path, skipping test")
     def test_line_correction_char_count(self):
         text_str = "にに"
         surface = cs.render_string(
@@ -589,6 +599,7 @@ R	10	ヒ	0	0	3.5937597e+00"""
         # '|=|=' != 'にに'
         self.assertEqual(retval, text_str)
 
+    @unittest.skipIf(not is_nhocr_available(), "nhocr not found in path, skipping test")
     def test_line_correction_char_count_half_size(self):
         text_str = "にに"
         surface = cs.render_string(
@@ -606,6 +617,7 @@ R	10	ヒ	0	0	3.5937597e+00"""
         # '|=|=' != 'にに'
         self.assertEqual(retval, text_str)
 
+    @unittest.skipIf(not is_nhocr_available(), "nhocr not found in path, skipping test")
     def test_line_correction_char_count_double_size(self):
         text_str = "にに"
         surface = cs.render_string(
@@ -623,6 +635,7 @@ R	10	ヒ	0	0	3.5937597e+00"""
         # '|=|=' != 'にに'
         self.assertEqual(retval, text_str)
 
+    @unittest.skipIf(not is_nhocr_available(), "nhocr not found in path, skipping test")
     def test_line_correction_char_count_vertical(self):
         text_str = "にに"
         surface = cs.render_string(
@@ -641,6 +654,7 @@ R	10	ヒ	0	0	3.5937597e+00"""
         # '|=|=' != 'にに'
         self.assertEqual(retval, text_str)
 
+    @unittest.skipIf(not is_nhocr_available(), "nhocr not found in path, skipping test")
     def test_line_correction_char_count_half_size_vertical(self):
         text_str = "にに"
         surface = cs.render_string(
@@ -659,6 +673,7 @@ R	10	ヒ	0	0	3.5937597e+00"""
         # '|=|=' != 'にに'
         self.assertEqual(retval, text_str)
 
+    @unittest.skipIf(not is_nhocr_available(), "nhocr not found in path, skipping test")
     def test_line_correction_char_count_double_size_vertical(self):
         text_str = "にに"
         surface = cs.render_string(
@@ -677,6 +692,7 @@ R	10	ヒ	0	0	3.5937597e+00"""
         # '|=|=' != 'にに'
         self.assertEqual(retval, text_str)
 
+    @unittest.skipIf(not is_nhocr_available(), "nhocr not found in path, skipping test")
     def test_line_translation_with_provided_spaces(self):
         text_str = "も の が た り"
         surface = cs.render_string(
@@ -693,6 +709,7 @@ R	10	ヒ	0	0	3.5937597e+00"""
         retval = cs.ocr(file_path, known_translation=text_str)
         self.assertEqual(retval, text_str)
 
+    @unittest.skipIf(not is_nhocr_available(), "nhocr not found in path, skipping test")
     def test_spot_check_character_by_index(self):
         text_str = "ものがたり"
         surface = cs.render_string(
@@ -737,6 +754,7 @@ R	10	ヒ	0	0	3.5937597e+00"""
         self.assertEqual(cs.ocr_by_index(surface, 3), "た")
         self.assertEqual(cs.ocr_by_index(surface, 4), "り")
 
+    @unittest.skipIf(not is_nhocr_available(), "nhocr not found in path, skipping test")
     def test_spot_check_character_by_index_vertical(self):
         text_str = "ものがたり"
         surface = cs.render_string(
