@@ -1,0 +1,3 @@
+[submodule "nhocr"]
+	path = nhocr
+	url = https://github.com/fireae/nhocr
