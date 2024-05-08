@@ -165,6 +165,10 @@ class shuji(Gtk.Window):
         clear_button.connect("clicked", self.on_clear_clicked)
         button_box.pack_start(clear_button, True, True, 0)
 
+        toggle_orient_button = Gtk.Button(label="Orientation")
+        toggle_orient_button.connect("clicked", self.on_toggle_orient)
+        button_box.pack_start(toggle_orient_button, True, True, 0)
+
         evaluate_button = Gtk.Button(label="Evaluate")
         evaluate_button.connect("clicked", self.on_evaluate_clicked)
         button_box.pack_start(evaluate_button, True, True, 0)
@@ -227,6 +231,33 @@ class shuji(Gtk.Window):
         # Clear the drawing area of user paths
         self.drawing_area.paths = []
         self.drawing_area.current_path = []
+
+    def on_toggle_orient(self, button):
+        # reorient application
+        self.drawing_area.RENDER_VERTICALLY = not self.drawing_area.RENDER_VERTICALLY
+
+        surface = cs.render_string(
+            self.TEXT,
+            render_vertically=self.drawing_area.RENDER_VERTICALLY,
+            font_size=self.FONTSIZE,
+            tile_width=self.TILESIZE,
+            tile_height=self.TILESIZE,
+        )
+
+        if self.drawing_area.RENDER_VERTICALLY:
+            for i in range(len(self.TEXT)):
+                surface = cs.apply_horizontal_rule(
+                    surface,
+                    y_offset=(i * self.TILESIZE),
+                    rules=self.RULES,
+                )
+        else:
+            surface = cs.apply_horizontal_rule(
+                surface,
+                rules=self.RULES,
+            )
+        self.drawing_area.surface = surface
+        self.drawing_area.change_text(self.TEXT)
 
     def on_evaluate_clicked(self, button):
         # Evaluate the drawing via ocr
