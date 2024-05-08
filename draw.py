@@ -41,7 +41,6 @@ class DrawingArea(Gtk.DrawingArea):
         self.connect("button-press-event", self.on_button_press)
         self.connect("motion-notify-event", self.on_motion_notify)
         self.connect("button-release-event", self.on_button_release)
-        self.change_text("しゅじ")
 
     def change_text(self, text):
         self.backing_store = None
@@ -182,6 +181,7 @@ class shuji(Gtk.Window):
             tilesize=self.TILESIZE,
             rules=self.RULES,
         )
+        self.drawing_area.change_text(self.TEXT or "しゅじ")
         vbox.pack_start(self.drawing_area, True, True, 0)
 
     def save_paths_to_surface(self, paths):
