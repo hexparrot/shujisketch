@@ -143,11 +143,10 @@ class shuji(Gtk.Window):
         self.FONTSIZE = fontsize
         self.TILESIZE = tilesize
         self.RULES = rules
+        self.index = 0
 
-        from itertools import cycle
-
-        self.REPEATED_TEXT = cycle(fulltext)
-        self.TEXT = next(self.REPEATED_TEXT)
+        self.fulltext = fulltext
+        self.TEXT = fulltext[self.index]
 
         # Create a VBox to stack the drawing area and the buttons vertically
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
@@ -169,6 +168,10 @@ class shuji(Gtk.Window):
         evaluate_button = Gtk.Button(label="Evaluate")
         evaluate_button.connect("clicked", self.on_evaluate_clicked)
         button_box.pack_start(evaluate_button, True, True, 0)
+
+        prev_button = Gtk.Button(label="Prev Line")
+        prev_button.connect("clicked", self.on_prev_clicked)
+        button_box.pack_start(prev_button, True, True, 0)
 
         next_button = Gtk.Button(label="Next Line")
         next_button.connect("clicked", self.on_next_clicked)
@@ -311,7 +314,40 @@ class shuji(Gtk.Window):
         self.drawing_area.paths = []
         self.drawing_area.current_path = []
 
-        self.TEXT = next(self.REPEATED_TEXT)
+        self.index = (self.index + 1) % len(self.fulltext)
+        self.TEXT = self.fulltext[self.index]
+
+        surface = cs.render_string(
+            self.TEXT,
+            render_vertically=self.drawing_area.RENDER_VERTICALLY,
+            font_size=self.FONTSIZE,
+            tile_width=self.TILESIZE,
+            tile_height=self.TILESIZE,
+        )
+
+        if self.drawing_area.RENDER_VERTICALLY:
+            for i in range(len(self.TEXT)):
+                surface = cs.apply_horizontal_rule(
+                    surface,
+                    y_offset=(i * self.TILESIZE),
+                    rules=self.RULES,
+                )
+        else:
+            surface = cs.apply_horizontal_rule(
+                surface,
+                rules=self.RULES,
+            )
+        self.drawing_area.surface = surface
+        self.drawing_area.change_text(self.TEXT)
+
+    def on_prev_clicked(self, button):
+        # Reset the drawing to its original state
+        self.drawing_area.paths = []
+        self.drawing_area.current_path = []
+
+        self.index = (self.index - 1) % len(self.fulltext)
+        self.TEXT = self.fulltext[self.index]
+
         surface = cs.render_string(
             self.TEXT,
             render_vertically=self.drawing_area.RENDER_VERTICALLY,
